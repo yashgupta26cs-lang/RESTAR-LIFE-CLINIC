@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOCTOR'S CLINIC</title>
+  <meta name="description" content="DOCTOR'S CLINIC: consult experienced doctors, explore our facilities and book an appointment online.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#home" class="brand" data-view-link="home">
+        <span class="brand-mark" aria-hidden="true">+</span>
+        <span class="brand-name">DOCTOR'S CLINIC</span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#home" class="nav-link" data-view-link="home">Home</a>
+        <a href="#overview" class="nav-link" data-view-link="overview">Overview / Explore</a>
+        <a href="#appointment" class="nav-link nav-cta" data-view-link="appointment">Take Appointment</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ VIEW: HOME ============ -->
+    <section id="view-home" class="view" data-view="home" aria-labelledby="home-title">
+      <div class="container hero">
+        <div class="hero-text">
+          <p class="eyebrow">Multi-Speciality Medical Centre</p>
+          <h1 id="home-title" class="hero-title">DOCTOR'S CLINIC</h1>
+          <p class="hero-lead">
+            Trusted, unhurried care from experienced specialists. In-house diagnostics,
+            pharmacy and emergency support, all under one roof.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#overview" class="btn btn-outline" data-view-link="overview">Overview / Explore</a>
+            <a href="#appointment" class="btn btn-solid" data-view-link="appointment">Take Appointment</a>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-box">
+              <h2 class="info-title">Clinic Timings</h2>
+              <ul class="info-list">
+                <li><span>Mon – Sat</span><span>09:00 AM – 01:00 PM</span></li>
+                <li><span></span><span>04:00 PM – 08:00 PM</span></li>
+                <li><span>Sunday</span><span>Closed (Emergency only)</span></li>
+                <li><span>Emergency</span><span>24 × 7</span></li>
+              </ul>
+            </div>
+            <div class="info-box">
+              <h2 class="info-title">Address &amp; Contact</h2>
+              <address class="info-address">
+                12, Health Avenue, Sector 21<br>
+                Near City Park, New Delhi – 110075<br>
+                Phone: <a href="tel:+911123456789">+91 11 2345 6789</a><br>
+                Email: <a href="mailto:care@doctorsclinic.example">care@doctorsclinic.example</a>
+              </address>
+            </div>
+          </div>
+        </div>
+
+        <figure class="hero-figure">
+          <img class="mono-img"
+               src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1400&q=80"
+               alt="Exterior of a modern hospital building"
+               data-fallback="Clinic Exterior">
+          <figcaption>Clinic exterior &amp; main entrance</figcaption>
+        </figure>
+      </div>
+
+      <div class="container">
+        <div class="stats-row">
+          <div class="stat"><span class="stat-num">6</span><span class="stat-label">Specialist Doctors</span></div>
+          <div class="stat"><span class="stat-num">24×7</span><span class="stat-label">Emergency Support</span></div>
+          <div class="stat"><span class="stat-num">15+</span><span class="stat-label">Years of Care</span></div>
+          <div class="stat"><span class="stat-num">1 Day</span><span class="stat-label">Lab Report Turnaround</span></div>
+        </div>
+
+        <div class="gallery">
+          <figure>
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=80"
+                 alt="Clean hospital reception and corridor" data-fallback="Reception">
+            <figcaption>Reception &amp; waiting area</figcaption>
+          </figure>
+          <figure>
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=900&q=80"
+                 alt="Doctor's consultation room" data-fallback="Consultation Room">
+            <figcaption>Consultation room</figcaption>
+          </figure>
+          <figure>
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=900&q=80"
+                 alt="Diagnostic laboratory with test tubes" data-fallback="Diagnostic Lab">
+            <figcaption>Diagnostic laboratory</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: OVERVIEW ============ -->
+    <section id="view-overview" class="view" data-view="overview" aria-labelledby="overview-title" hidden>
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">Overview / Explore</p>
+          <h1 id="overview-title" class="section-title">Available Doctors</h1>
+          <p class="section-sub">Choose a specialist and book directly. Fees are per consultation.</p>
+        </div>
+
+        <div id="doctor-grid" class="card-grid">
+          <!-- Doctor cards rendered by script.js -->
+        </div>
+
+        <div class="section-head section-head-spaced">
+          <h2 class="section-title">Available Facilities</h2>
+          <p class="section-sub">Everything you need for diagnosis and treatment, in one place.</p>
+        </div>
+
+        <div class="card-grid facility-grid">
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=900&q=80"
+                 alt="Pathology laboratory" data-fallback="Pathology Lab">
+            <div class="card-body">
+              <h3 class="card-title">Pathology &amp; Diagnostic Lab</h3>
+              <p>Blood tests, urine analysis, thyroid, lipid and diabetes panels. Most reports ready the same day.</p>
+            </div>
+          </article>
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=900&q=80"
+                 alt="Medicines on pharmacy shelves" data-fallback="Pharmacy">
+            <div class="card-body">
+              <h3 class="card-title">In-House Pharmacy</h3>
+              <p>Genuine medicines stocked on site, so you can fill your prescription before you leave.</p>
+            </div>
+          </article>
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=80"
+                 alt="Hospital diagnostic equipment" data-fallback="ECG &amp; X-Ray">
+            <div class="card-body">
+              <h3 class="card-title">ECG &amp; Digital X-Ray</h3>
+              <p>12-lead ECG and low-dose digital X-ray with quick reporting by our physicians.</p>
+            </div>
+          </article>
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=80"
+                 alt="Hospital emergency ward" data-fallback="Emergency">
+            <div class="card-body">
+              <h3 class="card-title">24/7 Emergency Support</h3>
+              <p>Round-the-clock emergency care with an on-call doctor and ambulance coordination.</p>
+            </div>
+          </article>
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=900&q=80"
+                 alt="Private consultation suite" data-fallback="Consultation Suites">
+            <div class="card-body">
+              <h3 class="card-title">Consultation Suites</h3>
+              <p>Private, quiet rooms for every specialist, so you can speak openly about your health.</p>
+            </div>
+          </article>
+          <article class="card facility-card">
+            <img class="mono-img"
+                 src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=80"
+                 alt="Hospital reception desk" data-fallback="Reception">
+            <div class="card-body">
+              <h3 class="card-title">Reception &amp; Token Desk</h3>
+              <p>Show your appointment token at the desk and you will be called in order of your slot.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="cta-band">
+          <p>Ready to see a doctor?</p>
+          <a href="#appointment" class="btn btn-solid" data-view-link="appointment">Take Appointment</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: APPOINTMENT ============ -->
+    <section id="view-appointment" class="view" data-view="appointment" aria-labelledby="appointment-title" hidden>
+      <div class="container narrow">
+
+        <!-- Booking form -->
+        <div id="booking-panel">
+          <div class="section-head">
+            <p class="eyebrow">Take Appointment</p>
+            <h1 id="appointment-title" class="section-title">Book Your Appointment</h1>
+            <p class="section-sub">Fields marked <span class="req">*</span> are required.</p>
+          </div>
+
+          <div id="form-error-summary" class="error-summary" role="alert" hidden></div>
+
+          <form id="booking-form" class="form" novalidate>
+            <!-- Step 1: Patient details -->
+            <fieldset class="form-block">
+              <legend class="block-title"><span class="step-num">1</span> Patient Details</legend>
+
+              <div class="form-row">
+                <div class="field">
+                  <label for="patient-name">Patient Name <span class="req">*</span></label>
+                  <input type="text" id="patient-name" name="name" autocomplete="name" placeholder="e.g. Rahul Verma">
+                  <p class="field-error" id="err-name"></p>
+                </div>
+                <div class="field field-small">
+                  <label for="patient-age">Age <span class="req">*</span></label>
+                  <input type="number" id="patient-age" name="age" min="0" max="120" inputmode="numeric" placeholder="Years">
+                  <p class="field-error" id="err-age"></p>
+                </div>
+              </div>
+
+              <div class="field">
+                <span class="label" id="gender-label">Gender <span class="req">*</span></span>
+                <div class="segmented" role="radiogroup" aria-labelledby="gender-label">
+                  <label class="seg-option"><input type="radio" name="gender" value="Male"><span>Male</span></label>
+                  <label class="seg-option"><input type="radio" name="gender" value="Female"><span>Female</span></label>
+                  <label class="seg-option"><input type="radio" name="gender" value="Other"><span>Other</span></label>
+                </div>
+                <p class="field-error" id="err-gender"></p>
+              </div>
+
+              <div class="field">
+                <label for="patient-phone">Phone Number <span class="req">*</span></label>
+                <input type="tel" id="patient-phone" name="phone" autocomplete="tel" placeholder="10-digit mobile number" maxlength="14">
+                <p class="field-error" id="err-phone"></p>
+              </div>
+
+              <div class="field">
+                <label for="patient-symptoms">Disease / Symptoms <span class="req">*</span></label>
+                <textarea id="patient-symptoms" name="symptoms" rows="3" placeholder="Briefly describe your problem, e.g. fever and cough for 3 days"></textarea>
+                <p class="field-error" id="err-symptoms"></p>
+              </div>
+            </fieldset>
+
+            <!-- Step 2: Doctor -->
+            <fieldset class="form-block">
+              <legend class="block-title"><span class="step-num">2</span> Select Doctor <span class="req">*</span></legend>
+              <div id="doctor-options" class="doctor-options" role="radiogroup" aria-label="Select doctor">
+                <!-- Rendered by script.js -->
+              </div>
+              <p class="field-error" id="err-doctor"></p>
+              <div id="fee-display" class="fee-display" aria-live="polite">
+                <span>Consultation Fee</span>
+                <strong id="fee-amount">Select a doctor</strong>
+              </div>
+            </fieldset>
+
+            <!-- Step 3: Date & slot -->
+            <fieldset class="form-block">
+              <legend class="block-title"><span class="step-num">3</span> Date &amp; Time Slot</legend>
+
+              <div class="field field-date">
+                <label for="appt-date">Appointment Date <span class="req">*</span></label>
+                <input type="date" id="appt-date" name="date">
+                <p class="hint" id="date-hint"></p>
+                <p class="field-error" id="err-date"></p>
+              </div>
+
+              <div class="field">
+                <span class="label" id="slot-label">Available Time Slots <span class="req">*</span></span>
+                <div id="slot-grid" class="slot-grid" role="radiogroup" aria-labelledby="slot-label">
+                  <!-- Rendered by script.js -->
+                </div>
+                <div class="slot-legend">
+                  <span><i class="lg lg-free"></i> Available</span>
+                  <span><i class="lg lg-sel"></i> Selected</span>
+                  <span><i class="lg lg-booked"></i> Booked</span>
+                </div>
+                <p class="field-error" id="err-slot"></p>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-outline">Clear Form</button>
+              <button type="submit" class="btn btn-solid">Confirm &amp; Generate Token</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Token slip -->
+        <div id="slip-panel" hidden>
+          <div class="slip-toolbar no-print">
+            <p class="success-note">Appointment confirmed. Please bring this slip (printed or on your phone) to the reception desk.</p>
+          </div>
+
+          <article id="slip" class="slip" aria-labelledby="slip-clinic">
+            <header class="slip-head">
+              <div>
+                <h2 id="slip-clinic" class="slip-clinic">DOCTOR'S CLINIC</h2>
+                <p class="slip-addr">12, Health Avenue, Sector 21, New Delhi – 110075 · +91 11 2345 6789</p>
+              </div>
+              <p class="slip-doc-type">Appointment Slip</p>
+            </header>
+
+            <div class="slip-token">
+              <span class="slip-token-label">TOKEN NUMBER</span>
+              <span class="slip-token-num" id="slip-token">DC-101</span>
+            </div>
+
+            <div class="slip-section">
+              <h3 class="slip-sec-title">Appointment</h3>
+              <dl class="slip-dl">
+                <div><dt>Date</dt><dd id="slip-date"></dd></div>
+                <div><dt>Time Slot</dt><dd id="slip-time"></dd></div>
+              </dl>
+            </div>
+
+            <div class="slip-section">
+              <h3 class="slip-sec-title">Patient Details</h3>
+              <dl class="slip-dl">
+                <div><dt>Name</dt><dd id="slip-name"></dd></div>
+                <div><dt>Age</dt><dd id="slip-age"></dd></div>
+                <div><dt>Gender</dt><dd id="slip-gender"></dd></div>
+                <div><dt>Phone</dt><dd id="slip-phone"></dd></div>
+                <div class="full"><dt>Disease / Symptoms</dt><dd id="slip-symptoms"></dd></div>
+              </dl>
+            </div>
+
+            <div class="slip-section">
+              <h3 class="slip-sec-title">Doctor</h3>
+              <dl class="slip-dl">
+                <div><dt>Doctor</dt><dd id="slip-doctor"></dd></div>
+                <div><dt>Specialty</dt><dd id="slip-specialty"></dd></div>
+                <div><dt>Consultation Fee</dt><dd id="slip-fee"></dd></div>
+              </dl>
+            </div>
+
+            <footer class="slip-foot">
+              <p>Please arrive 15 minutes before your slot. Carry previous prescriptions and reports, if any.</p>
+              <p>Issued on <span id="slip-issued"></span></p>
+            </footer>
+          </article>
+
+          <div class="form-actions no-print">
+            <button type="button" id="btn-new" class="btn btn-outline">Book Another Appointment</button>
+            <button type="button" id="btn-print" class="btn btn-solid">Print / Save Sheet (PDF)</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>DOCTOR'S CLINIC</strong> · 12, Health Avenue, Sector 21, New Delhi – 110075</p>
+      <p>Emergency 24×7: <a href="tel:+911123456789">+91 11 2345 6789</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
