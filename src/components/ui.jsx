@@ -7,12 +7,12 @@ import { initials, inr, daysText, hoursText } from "../lib.js";
 export const ICONS = { Stethoscope, HeartPulse, Bone, ScanFace, Baby, Brain, FlaskConical, ScanLine, Pill, DoorOpen, Siren, ClipboardCheck };
 
 /** Grayscale photo on a #EAEAEA box. A failed image hides itself: never a broken-image icon. */
-export function Photo({ src, alt, className = "", imgClassName = "" }) {
+export function Photo({ src, alt, className = "", imgClassName = "", eager = false }) {
   const [broken, setBroken] = useState(false);
   return (
     <div className={`media ${className}`}>
       {!broken && (
-        <img src={src} alt={alt} loading="lazy" onError={() => setBroken(true)} className={`img-mono absolute inset-0 ${imgClassName}`} />
+        <img src={src} alt={alt} loading={eager ? "eager" : "lazy"} fetchpriority={eager ? "high" : undefined} onError={() => setBroken(true)} className={`img-mono absolute inset-0 ${imgClassName}`} />
       )}
       {broken && <span className="sr-only">{alt}</span>}
     </div>

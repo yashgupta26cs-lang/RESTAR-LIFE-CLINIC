@@ -54,7 +54,7 @@ export default function Home() {
           </div>
 
           <div className="lg:col-span-6 relative min-h-[380px] lg:min-h-[620px]">
-            <Photo src={IMAGES.hero} alt="Modern hospital lobby with reception counter" className="absolute inset-0" />
+            <Photo src={IMAGES.hero} alt="Modern hospital lobby with reception counter" className="absolute inset-0" eager />
             <div className="absolute bottom-0 left-0 max-w-[82%] bg-ink p-6 text-white">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400">Main Lobby · Ground Floor</p>
               <p className="mt-2 text-lg font-semibold leading-snug">Open Mon – Sat, 08:00 AM to 08:00 PM. Lab and emergency open 24/7.</p>
