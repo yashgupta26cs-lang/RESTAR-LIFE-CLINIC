@@ -1,508 +1,428 @@
-/* =========================================================
-   DOCTOR'S CLINIC: views, doctors, booking form, token slip
-   ========================================================= */
+/* ==========================================================
+   DOCTOR'S CLINIC: views, directory search, booking, OPD slip
+   ========================================================== */
 (function () {
   "use strict";
 
-  /* ---------- Data ---------- */
-  // Days: 0 = Sunday ... 6 = Saturday
+  /* ---------- Data (placeholder doctors: replace with real ones) ---------- */
   var DOCTORS = [
-    {
-      id: "dr-sharma", name: "Dr. Rajesh Sharma", specialty: "General Physician",
-      qual: "MBBS, MD (Medicine) · 18 yrs experience", fee: 500,
-      days: [1, 2, 3, 4, 5, 6], daysText: "Mon – Sat", timeText: "09:00 AM – 01:00 PM, 04:00 PM – 06:00 PM",
-      slots: ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM"]
-    },
-    {
-      id: "dr-mehta", name: "Dr. Ananya Mehta", specialty: "Cardiologist",
-      qual: "MBBS, MD, DM (Cardiology) · 14 yrs experience", fee: 1000,
-      days: [1, 3, 5], daysText: "Mon, Wed, Fri", timeText: "10:00 AM – 01:00 PM",
-      slots: ["10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM"]
-    },
-    {
-      id: "dr-nair", name: "Dr. Priya Nair", specialty: "Dermatologist",
-      qual: "MBBS, MD (Dermatology) · 10 yrs experience", fee: 700,
-      days: [1, 2, 3, 4, 5], daysText: "Mon – Fri", timeText: "04:00 PM – 07:00 PM",
-      slots: ["04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM"]
-    },
-    {
-      id: "dr-singh", name: "Dr. Vikram Singh", specialty: "Orthopedic Surgeon",
-      qual: "MBBS, MS (Orthopaedics) · 16 yrs experience", fee: 800,
-      days: [2, 4, 6], daysText: "Tue, Thu, Sat", timeText: "09:00 AM – 12:00 PM, 04:00 PM – 06:00 PM",
-      slots: ["09:00 AM", "09:30 AM", "10:00 AM", "11:00 AM", "04:00 PM", "05:00 PM"]
-    },
-    {
-      id: "dr-kapoor", name: "Dr. Arjun Kapoor", specialty: "Pediatrician",
-      qual: "MBBS, MD (Paediatrics) · 12 yrs experience", fee: 600,
-      days: [1, 2, 3, 4, 5, 6], daysText: "Mon – Sat", timeText: "09:00 AM – 12:00 PM",
-      slots: ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"]
-    },
-    {
-      id: "dr-iyer", name: "Dr. Sneha Iyer", specialty: "Gynecologist",
-      qual: "MBBS, MS (Obstetrics & Gynaecology) · 11 yrs experience", fee: 800,
-      days: [1, 3, 5, 6], daysText: "Mon, Wed, Fri, Sat", timeText: "11:00 AM – 01:00 PM, 05:00 PM – 07:00 PM",
-      slots: ["11:00 AM", "11:30 AM", "12:00 PM", "05:00 PM", "05:30 PM", "06:00 PM"]
-    }
+    { id: "mehta",  name: "Dr. Arjun Mehta",   qual: "MBBS, MD (Internal Medicine)",       specialty: "General Medicine", exp: 18, timings: "Mon – Sat · 09:00 AM – 05:00 PM", fee: 600 },
+    { id: "kapoor", name: "Dr. Sunita Kapoor", qual: "MBBS, MD (Medicine)",                specialty: "General Medicine", exp: 11, timings: "Mon – Sat · 09:00 AM – 05:00 PM", fee: 500 },
+    { id: "rao",    name: "Dr. Vikram Rao",    qual: "MBBS, MD, DM (Cardiology)",          specialty: "Cardiology",       exp: 21, timings: "Mon, Wed, Fri · 10:00 AM – 05:00 PM", fee: 1200, days: [1, 3, 5] },
+    { id: "singh",  name: "Dr. Harpreet Singh",qual: "MBBS, MS (Orthopaedics)",            specialty: "Orthopedics",      exp: 16, timings: "Tue, Thu, Sat · 09:00 AM – 05:00 PM", fee: 900, days: [2, 4, 6] },
+    { id: "nair",   name: "Dr. Priya Nair",    qual: "MBBS, MD (Dermatology, Venereology)",specialty: "Dermatology",      exp: 10, timings: "Mon – Fri · 09:00 AM – 05:00 PM", fee: 800, days: [1, 2, 3, 4, 5] },
+    { id: "iyer",   name: "Dr. Kavya Iyer",    qual: "MBBS, MD (Paediatrics)",             specialty: "Pediatrics",       exp: 13, timings: "Mon – Sat · 09:00 AM – 05:00 PM", fee: 700 }
   ];
-
-  var DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var SLOTS = ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "04:00 PM", "04:30 PM", "05:00 PM"];
+  var DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var CLINIC_DAYS = [1, 2, 3, 4, 5, 6];
   var TOKEN_START = 101;
-  var STORE_TOKEN = "dc_last_token";
-  var STORE_BOOKINGS = "dc_bookings";
+  var K_TOKEN = "dc2_last_token", K_BOOKED = "dc2_booked";
 
   /* ---------- Helpers ---------- */
-  function $(sel, root) { return (root || document).querySelector(sel); }
-  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  function fee(n) { return "₹" + n.toLocaleString("en-IN"); }
-  function initials(name) {
-    return name.replace(/^Dr\.\s*/, "").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
-  }
-  function findDoctor(id) {
-    for (var i = 0; i < DOCTORS.length; i++) if (DOCTORS[i].id === id) return DOCTORS[i];
-    return null;
-  }
-  function store(key, val) {
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function inr(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
+  function byId(id) { for (var i = 0; i < DOCTORS.length; i++) if (DOCTORS[i].id === id) return DOCTORS[i]; return null; }
+  function daysOf(d) { return d.days || CLINIC_DAYS; }
+  function initials(n) { return n.replace(/^Dr\.\s*/, "").split(/\s+/).map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase(); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parseISO(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function longDate(s) { return parseISO(s).toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }); }
+  function mins(slot) { var m = slot.match(/(\d+):(\d+)\s*(AM|PM)/); var h = +m[1] % 12 + (m[3] === "PM" ? 12 : 0); return h * 60 + +m[2]; }
+  function hash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  function store(k, v) {
     try {
-      if (val === undefined) return JSON.parse(localStorage.getItem(key));
-      localStorage.setItem(key, JSON.stringify(val));
+      if (v === undefined) return JSON.parse(localStorage.getItem(k));
+      localStorage.setItem(k, JSON.stringify(v));
     } catch (e) { return null; }
   }
-  function pad(n) { return (n < 10 ? "0" : "") + n; }
-  function toISO(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-  function parseISO(s) {
-    var p = s.split("-");
-    return new Date(+p[0], +p[1] - 1, +p[2]);
-  }
-  function prettyDate(s) {
-    var d = parseISO(s);
-    return d.toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
-  }
-  // "04:30 PM" -> minutes since midnight
-  function slotMinutes(slot) {
-    var m = slot.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/);
-    var h = +m[1] % 12;
-    if (m[3] === "PM") h += 12;
-    return h * 60 + +m[2];
-  }
-  // Small deterministic hash, so sample "booked" slots stay the same for a doctor + date
-  function hash(str) {
-    var h = 0;
-    for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return h;
-  }
-  function escapeHTML(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function cleanPhone(p) { return p.replace(/[\s-]/g, "").replace(/^(\+91|0)/, ""); }
 
-  /* ---------- View switching ---------- */
+  /* ---------- Views ---------- */
   var VIEWS = ["home", "overview", "appointment"];
-
-  function showView(name, opts) {
-    if (VIEWS.indexOf(name) === -1) name = "home";
-    $all(".view").forEach(function (v) { v.hidden = v.getAttribute("data-view") !== name; });
-    $all(".nav-link").forEach(function (a) {
+  function viewFromHash() { var h = location.hash.slice(1); return VIEWS.indexOf(h) > -1 ? h : "home"; }
+  function showView(name) {
+    $$(".view").forEach(function (v) { v.hidden = v.getAttribute("data-view") !== name; });
+    $$(".nav-link").forEach(function (a) {
       var on = a.getAttribute("data-view-link") === name;
       a.classList.toggle("is-active", on);
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    if (!opts || !opts.keepScroll) window.scrollTo(0, 0);
+    window.scrollTo(0, 0);
   }
-
-  function currentHashView() {
-    var h = (location.hash || "#home").slice(1);
-    return VIEWS.indexOf(h) === -1 ? "home" : h;
-  }
-
-  window.addEventListener("hashchange", function () { showView(currentHashView()); });
-
-  /* ---------- Image fallback (if a stock photo fails to load) ---------- */
-  function wireImageFallbacks() {
-    $all("img.mono-img").forEach(function (img) {
-      function swap() {
-        var box = document.createElement("div");
-        box.className = "img-fallback " + (img.className.replace("mono-img", "").trim());
-        box.setAttribute("role", "img");
-        box.setAttribute("aria-label", img.alt);
-        box.textContent = img.getAttribute("data-fallback") || img.alt;
-        img.replaceWith(box);
+  function go(name, scrollId) {
+    if (location.hash !== "#" + name) history.pushState(null, "", "#" + name);
+    showView(name);
+    if (scrollId) {
+      var el = document.getElementById(scrollId);
+      if (el) {
+        var top = el.getBoundingClientRect().top + window.pageYOffset - $(".site-header").offsetHeight;
+        window.scrollTo(0, top);
       }
-      if (img.complete && img.naturalWidth === 0 && img.src) swap();
-      else img.addEventListener("error", swap, { once: true });
+    }
+  }
+  window.addEventListener("popstate", function () { showView(viewFromHash()); });
+  window.addEventListener("hashchange", function () { showView(viewFromHash()); });
+
+  /* ---------- Image fallback: grey box, never a broken icon ---------- */
+  function wireImages() {
+    $$(".media img").forEach(function (img) {
+      function broken() { img.parentNode.classList.add("is-broken"); }
+      if (img.complete && img.naturalWidth === 0) broken();
+      img.addEventListener("error", broken);
     });
   }
 
-  /* ---------- Overview: doctor cards ---------- */
-  function renderDoctorCards() {
-    var grid = $("#doctor-grid");
-    grid.innerHTML = DOCTORS.map(function (d) {
-      return (
-        '<article class="card doctor-card">' +
-          '<div class="doc-top">' +
-            '<span class="doc-initials" aria-hidden="true">' + initials(d.name) + "</span>" +
-            "<div>" +
-              '<h3 class="card-title">' + d.name + "</h3>" +
-              '<span class="doc-specialty">' + d.specialty + "</span>" +
-            "</div>" +
+  /* ---------- Directory ---------- */
+  var filter = { text: "", spec: "All" };
+
+  function renderDirectory() {
+    var q = filter.text.trim().toLowerCase();
+    var list = DOCTORS.filter(function (d) {
+      var specOk = filter.spec === "All" || d.specialty === filter.spec;
+      var textOk = !q || (d.name + " " + d.specialty + " " + d.qual).toLowerCase().indexOf(q) > -1;
+      return specOk && textOk;
+    });
+    $("#doctor-grid").innerHTML = list.map(function (d) {
+      return '<article class="doctor-card">' +
+        '<div class="doc-head">' +
+          '<span class="doc-mono" aria-hidden="true">' + initials(d.name) + "</span>" +
+          "<div>" +
+            '<span class="badge">' + esc(d.specialty) + "</span>" +
+            '<h3 class="doc-name">' + esc(d.name) + "</h3>" +
+            '<p class="doc-qual">' + esc(d.qual) + "</p>" +
           "</div>" +
-          '<div class="card-body">' +
-            '<p class="doc-qual">' + d.qual + "</p>" +
-            '<dl class="doc-meta">' +
-              "<div><dt>Consultation Fee</dt><dd><strong>" + fee(d.fee) + "</strong></dd></div>" +
-              "<div><dt>Days</dt><dd>" + d.daysText + "</dd></div>" +
-              "<div><dt>Timings</dt><dd>" + d.timeText + "</dd></div>" +
-            "</dl>" +
-            '<button type="button" class="btn btn-solid" data-book="' + d.id + '">Book Appointment</button>' +
-          "</div>" +
-        "</article>"
-      );
+        "</div>" +
+        '<div class="doc-body">' +
+          '<dl class="doc-facts">' +
+            "<div><dt>Experience</dt><dd>" + d.exp + " years</dd></div>" +
+            "<div><dt>Available</dt><dd>" + esc(d.timings) + "</dd></div>" +
+            '<div><dt>Consultation Fee</dt><dd class="doc-fee">' + inr(d.fee) + "</dd></div>" +
+          "</dl>" +
+          '<button type="button" class="btn btn-primary" data-book="' + d.id + '">Book Appointment</button>' +
+        "</div>" +
+      "</article>";
     }).join("");
+    $("#doctor-empty").hidden = list.length > 0;
+    $("#result-count").textContent = "Showing " + list.length + " of " + DOCTORS.length + " doctors";
+  }
 
-    grid.addEventListener("click", function (e) {
-      var btn = e.target.closest("[data-book]");
-      if (!btn) return;
-      openBookingWith(btn.getAttribute("data-book"));
+  function setSpec(spec) {
+    filter.spec = spec;
+    $$("#filter-tabs .tab").forEach(function (t) {
+      var on = t.getAttribute("data-filter") === spec;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
     });
+    renderDirectory();
   }
 
-  function openBookingWith(doctorId) {
-    showBookingPanel();
-    selectDoctor(doctorId);
-    if (location.hash !== "#appointment") location.hash = "#appointment";
-    else showView("appointment");
-    var input = $('input[name="doctor"][value="' + doctorId + '"]');
-    if (input) input.focus({ preventScroll: true });
-  }
-
-  /* ---------- Booking form ---------- */
-  var form, slotGrid, dateInput;
+  /* ---------- Booking state ---------- */
   var state = { doctorId: null, slot: null };
+  var dateEl;
 
-  function renderDoctorOptions() {
-    $("#doctor-options").innerHTML = DOCTORS.map(function (d) {
-      return (
-        '<label class="doc-option">' +
-          '<input type="radio" name="doctor" value="' + d.id + '">' +
-          '<span class="doc-option-box">' +
-            '<span class="doc-option-name">' + d.name + "</span>" +
-            '<span class="doc-option-spec">' + d.specialty + "</span>" +
-            '<span class="doc-option-fee">' + fee(d.fee) + "</span>" +
-            '<span class="doc-option-days">' + d.daysText + " · " + d.timeText + "</span>" +
-          "</span>" +
-        "</label>"
-      );
+  function renderDocOptions() {
+    $("#doc-options").innerHTML = DOCTORS.map(function (d) {
+      return '<label class="doc-opt">' +
+        '<input type="radio" name="doctor" value="' + d.id + '">' +
+        '<span class="doc-opt-box">' +
+          '<span class="doc-opt-name">' + esc(d.name) + "</span>" +
+          '<span class="doc-opt-fee">' + inr(d.fee) + "</span>" +
+          '<span class="doc-opt-spec">' + esc(d.specialty) + "</span>" +
+        "</span></label>";
     }).join("");
   }
 
   function selectDoctor(id) {
-    var d = findDoctor(id);
-    state.doctorId = d ? d.id : null;
-    state.slot = null;
-    $all('input[name="doctor"]').forEach(function (r) { r.checked = r.value === state.doctorId; });
-    $("#fee-amount").textContent = d ? fee(d.fee) + "  (" + d.name + ")" : "Select a doctor";
-    clearError("doctor");
-    updateDateHint();
+    state.doctorId = byId(id) ? id : null;
+    $$('input[name="doctor"]').forEach(function (r) { r.checked = r.value === state.doctorId; });
+    clearErr("doctor");
+    var d = byId(state.doctorId);
+    $("#date-hint").textContent = d
+      ? d.name + " consults " + d.timings.split(" · ")[0] + "."
+      : "OPD runs Monday to Saturday. Sunday is closed.";
     renderSlots();
+    updateSummary();
   }
 
-  function updateDateHint() {
-    var d = findDoctor(state.doctorId);
-    $("#date-hint").textContent = d ? d.name + " is available on " + d.daysText + "." : "";
-  }
-
-  function getBookings() { return store(STORE_BOOKINGS) || {}; }
-
-  function bookedSlotsFor(doctor, dateStr) {
-    var booked = {};
-    // Two sample "already booked" slots, fixed per doctor + date
-    var n = doctor.slots.length;
-    var h = hash(doctor.id + "|" + dateStr);
-    booked[doctor.slots[h % n]] = true;
-    booked[doctor.slots[(h >> 3) % n]] = true;
-    // Plus slots booked from this browser
-    var key = doctor.id + "|" + dateStr;
-    (getBookings()[key] || []).forEach(function (s) { booked[s] = true; });
-    return booked;
+  function bookedSet(doctorId, date) {
+    var set = {};
+    // Two sample "BOOKED" slots, fixed for each doctor + date
+    var h = hash(doctorId + "|" + date);
+    var a = h % SLOTS.length, b = (a + 1 + (h >>> 4) % (SLOTS.length - 1)) % SLOTS.length;
+    set[SLOTS[a]] = true; set[SLOTS[b]] = true;
+    var mine = (store(K_BOOKED) || {})[doctorId + "|" + date] || [];
+    mine.forEach(function (s) { set[s] = true; });
+    return set;
   }
 
   function renderSlots() {
-    var d = findDoctor(state.doctorId);
-    var dateStr = dateInput.value;
-
-    if (!d) { slotGrid.innerHTML = '<p class="slot-empty">Select a doctor to see available time slots.</p>'; return; }
-    if (!dateStr) { slotGrid.innerHTML = '<p class="slot-empty">Choose an appointment date to see available time slots.</p>'; return; }
-
-    var date = parseISO(dateStr);
-    if (d.days.indexOf(date.getDay()) === -1) {
-      slotGrid.innerHTML = '<p class="slot-empty">' + d.name + " is not available on " + DAY_NAMES[date.getDay()] +
-        "s. Available: " + d.daysText + ". Please pick another date.</p>";
+    var grid = $("#slot-grid");
+    var d = byId(state.doctorId);
+    var date = dateEl.value;
+    if (!d) { grid.innerHTML = '<p class="slot-empty">Select a doctor in step 02 to see available time slots.</p>'; return; }
+    if (!date) { grid.innerHTML = '<p class="slot-empty">Choose a date to see available time slots.</p>'; return; }
+    var day = parseISO(date).getDay();
+    if (daysOf(d).indexOf(day) === -1) {
       state.slot = null;
+      grid.innerHTML = '<p class="slot-empty">' + esc(d.name) + " does not consult on " + DAY[day] + "s (" +
+        esc(d.timings.split(" · ")[0]) + "). Please choose another date.</p>";
+      updateSummary();
       return;
     }
-
-    var booked = bookedSlotsFor(d, dateStr);
-    var now = new Date();
-    var isToday = toISO(now) === dateStr;
-    var nowMin = now.getHours() * 60 + now.getMinutes();
-
-    var html = "";
-    var lastGroup = "";
-    d.slots.forEach(function (s) {
-      var group = slotMinutes(s) < 12 * 60 ? "Morning" : (slotMinutes(s) < 16 * 60 ? "Afternoon" : "Evening");
-      if (group !== lastGroup) { html += '<p class="slot-group-label">' + group + "</p>"; lastGroup = group; }
-      var isBooked = !!booked[s];
-      var isPast = isToday && slotMinutes(s) <= nowMin;
-      var disabled = isBooked || isPast;
-      if (disabled && state.slot === s) state.slot = null;
-      var selected = !disabled && state.slot === s;
-      html += '<button type="button" class="slot' + (selected ? " is-selected" : "") + '" data-slot="' + s + '" role="radio" aria-checked="' + selected + '"' +
-        (disabled ? " disabled" : "") + ">" +
+    var booked = bookedSet(d.id, date);
+    var now = new Date(), today = iso(now) === date, nowM = now.getHours() * 60 + now.getMinutes();
+    grid.innerHTML = SLOTS.map(function (s) {
+      var isB = !!booked[s], isP = !isB && today && mins(s) <= nowM;
+      var off = isB || isP;
+      if (off && state.slot === s) state.slot = null;
+      var sel = !off && state.slot === s;
+      return '<button type="button" class="slot' + (sel ? " is-selected" : "") + '" data-slot="' + s + '" role="radio" aria-checked="' + sel + '"' + (off ? " disabled" : "") + ">" +
         '<span class="slot-time">' + s + "</span>" +
-        (isBooked ? '<span class="slot-tag">Booked</span>' : isPast ? '<span class="slot-tag">Passed</span>' : "") +
+        (isB ? '<span class="slot-tag">BOOKED</span>' : isP ? '<span class="slot-tag">PASSED</span>' : "") +
         "</button>";
-    });
-    slotGrid.innerHTML = html;
+    }).join("");
+    updateSummary();
   }
 
-  /* ---------- Validation ---------- */
-  var FIELDS = {
-    name: "#patient-name", age: "#patient-age", phone: "#patient-phone",
-    symptoms: "#patient-symptoms", date: "#appt-date"
-  };
-
-  function setError(key, msg) {
-    var el = $("#err-" + key);
-    if (el) el.textContent = msg;
-    if (FIELDS[key]) { $(FIELDS[key]).classList.add("is-invalid"); $(FIELDS[key]).setAttribute("aria-invalid", "true"); }
-    if (key === "gender") $(".segmented").classList.add("is-invalid-group");
-    if (key === "doctor") $("#doctor-options").classList.add("is-invalid-group");
+  /* ---------- Live summary ---------- */
+  function setSum(id, val, empty) {
+    var el = $("#" + id);
+    el.textContent = val || empty;
+    el.classList.toggle("is-empty", !val);
   }
-  function clearError(key) {
-    var el = $("#err-" + key);
-    if (el) el.textContent = "";
-    if (FIELDS[key]) { $(FIELDS[key]).classList.remove("is-invalid"); $(FIELDS[key]).removeAttribute("aria-invalid"); }
-    if (key === "gender") $(".segmented").classList.remove("is-invalid-group");
-    if (key === "doctor") $("#doctor-options").classList.remove("is-invalid-group");
-  }
-
   function collect() {
     var g = $('input[name="gender"]:checked');
     return {
-      name: $("#patient-name").value.trim().replace(/\s+/g, " "),
-      age: $("#patient-age").value.trim(),
+      name: $("#f-name").value.trim().replace(/\s+/g, " "),
+      age: $("#f-age").value.trim(),
       gender: g ? g.value : "",
-      phone: $("#patient-phone").value.trim(),
-      symptoms: $("#patient-symptoms").value.trim(),
+      phone: $("#f-phone").value.trim(),
+      symptoms: $("#f-symptoms").value.trim(),
       doctorId: state.doctorId,
-      date: dateInput.value,
+      date: dateEl.value,
       slot: state.slot
     };
   }
+  function updateSummary() {
+    var v = collect(), d = byId(v.doctorId);
+    setSum("s-patient", v.name, "Not entered");
+    var ag = [v.age ? v.age + " yrs" : "", v.gender].filter(Boolean).join(" / ");
+    setSum("s-agegender", ag, "Not entered");
+    setSum("s-phone", v.phone, "Not entered");
+    setSum("s-doctor", d && d.name, "Not selected");
+    setSum("s-specialty", d && d.specialty, "Not selected");
+    setSum("s-date", v.date && longDate(v.date), "Not selected");
+    setSum("s-slot", v.slot, "Not selected");
+    $("#s-fee").textContent = d ? inr(d.fee) : "₹—";
+    var done = [v.name, v.age, v.gender, v.phone, v.symptoms, v.doctorId, v.date, v.slot].filter(Boolean).length;
+    $("#s-progress").textContent = done + " of 8 details complete";
+    $("#s-bar").style.width = (done / 8 * 100) + "%";
+  }
+
+  /* ---------- Validation ---------- */
+  var INPUTS = { name: "#f-name", age: "#f-age", phone: "#f-phone", symptoms: "#f-symptoms", date: "#f-date" };
+  var GROUPS = { gender: "#gender-group", doctor: "#doc-options" };
+  var LABEL = { name: "Full Name", age: "Age", gender: "Gender", phone: "Phone Number", symptoms: "Disease / Symptoms", doctor: "Doctor", date: "Appointment Date", slot: "Time Slot" };
+  var ORDER = ["name", "age", "phone", "gender", "symptoms", "doctor", "date", "slot"];
+
+  function setErr(k, msg) {
+    $("#err-" + k).textContent = msg;
+    if (INPUTS[k]) { $(INPUTS[k]).classList.add("is-invalid"); $(INPUTS[k]).setAttribute("aria-invalid", "true"); }
+    if (GROUPS[k]) $(GROUPS[k]).classList.add("is-invalid-group");
+  }
+  function clearErr(k) {
+    $("#err-" + k).textContent = "";
+    if (INPUTS[k]) { $(INPUTS[k]).classList.remove("is-invalid"); $(INPUTS[k]).removeAttribute("aria-invalid"); }
+    if (GROUPS[k]) $(GROUPS[k]).classList.remove("is-invalid-group");
+  }
 
   function validate(v) {
-    var errors = {};
+    var e = {};
+    if (!v.name) e.name = "Enter the patient's full name.";
+    else if (v.name.length < 2) e.name = "Name must be at least 2 characters.";
+    else if (!/^[A-Za-z][A-Za-z .'-]*$/.test(v.name)) e.name = "Use letters, spaces, dots, hyphens or apostrophes only.";
 
-    if (!v.name) errors.name = "Please enter the patient's name.";
-    else if (v.name.length < 2) errors.name = "Name must be at least 2 characters.";
-    else if (!/^[A-Za-z][A-Za-z .'-]*$/.test(v.name)) errors.name = "Name can contain letters, spaces, dots, hyphens and apostrophes only.";
+    if (v.age === "") e.age = "Enter the patient's age.";
+    else if (!/^\d{1,3}$/.test(v.age) || +v.age > 120) e.age = "Enter an age between 0 and 120.";
 
-    if (v.age === "") errors.age = "Please enter the age.";
-    else if (!/^\d{1,3}$/.test(v.age) || +v.age < 0 || +v.age > 120) errors.age = "Enter a valid age between 0 and 120.";
+    if (!v.gender) e.gender = "Select a gender.";
 
-    if (!v.gender) errors.gender = "Please select a gender.";
+    if (!v.phone) e.phone = "Enter a phone number.";
+    else if (!/^[6-9]\d{9}$/.test(cleanPhone(v.phone))) e.phone = "Enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.";
 
-    var digits = v.phone.replace(/[\s-]/g, "").replace(/^(\+91|0)/, "");
-    if (!v.phone) errors.phone = "Please enter a phone number.";
-    else if (!/^[6-9]\d{9}$/.test(digits)) errors.phone = "Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).";
+    if (!v.symptoms) e.symptoms = "Describe the disease or symptoms.";
+    else if (v.symptoms.length < 3) e.symptoms = "Add a little more detail.";
 
-    if (!v.symptoms) errors.symptoms = "Please describe the disease or symptoms.";
-    else if (v.symptoms.length < 3) errors.symptoms = "Please add a little more detail (at least 3 characters).";
+    var d = byId(v.doctorId);
+    if (!d) e.doctor = "Select a doctor.";
 
-    var d = findDoctor(v.doctorId);
-    if (!d) errors.doctor = "Please select a doctor.";
-
-    if (!v.date) errors.date = "Please choose an appointment date.";
+    if (!v.date) e.date = "Choose an appointment date.";
     else {
-      var chosen = parseISO(v.date);
-      var today = parseISO(toISO(new Date()));
-      var max = new Date(today); max.setDate(max.getDate() + 60);
-      if (chosen < today) errors.date = "The date cannot be in the past.";
-      else if (chosen > max) errors.date = "Appointments can be booked up to 60 days in advance.";
-      else if (d && d.days.indexOf(chosen.getDay()) === -1) errors.date = d.name + " is not available on " + DAY_NAMES[chosen.getDay()] + "s (" + d.daysText + ").";
+      var c = parseISO(v.date), t = parseISO(iso(new Date()));
+      var max = new Date(t); max.setDate(max.getDate() + 60);
+      if (c < t) e.date = "The date cannot be in the past.";
+      else if (c > max) e.date = "Appointments open up to 60 days ahead.";
+      else if (CLINIC_DAYS.indexOf(c.getDay()) === -1) e.date = "The clinic OPD is closed on Sundays.";
+      else if (d && daysOf(d).indexOf(c.getDay()) === -1) e.date = d.name + " does not consult on " + DAY[c.getDay()] + "s.";
     }
 
-    if (!v.slot) errors.slot = "Please select an available time slot.";
-
-    return errors;
+    if (!v.slot) e.slot = "Select an available time slot.";
+    else if (d && v.date && bookedSet(d.id, v.date)[v.slot]) e.slot = "That slot was just booked. Please pick another.";
+    return e;
   }
 
-  var LABELS = { name: "Patient Name", age: "Age", gender: "Gender", phone: "Phone Number", symptoms: "Disease / Symptoms", doctor: "Doctor", date: "Appointment Date", slot: "Time Slot" };
-  var ORDER = ["name", "age", "gender", "phone", "symptoms", "doctor", "date", "slot"];
-
-  function showErrors(errors) {
-    ORDER.forEach(function (k) { if (errors[k]) setError(k, errors[k]); else clearError(k); });
-    var keys = ORDER.filter(function (k) { return errors[k]; });
-    var summary = $("#form-error-summary");
-    if (!keys.length) { summary.hidden = true; summary.innerHTML = ""; return; }
-    summary.innerHTML = "<strong>Please fix " + keys.length + " field" + (keys.length > 1 ? "s" : "") + ":</strong><ul>" +
-      keys.map(function (k) { return "<li>" + LABELS[k] + ": " + errors[k] + "</li>"; }).join("") + "</ul>";
-    summary.hidden = false;
-    summary.scrollIntoView({ block: "start" });
-    var first = keys[0];
-    var focusEl = FIELDS[first] ? $(FIELDS[first]) :
-      first === "gender" ? $('input[name="gender"]') :
-      first === "doctor" ? $('input[name="doctor"]') :
-      $(".slot:not(:disabled)");
-    if (focusEl) focusEl.focus({ preventScroll: true });
+  function showErrors(e) {
+    ORDER.forEach(function (k) { if (e[k]) setErr(k, e[k]); else clearErr(k); });
+    var keys = ORDER.filter(function (k) { return e[k]; });
+    var box = $("#error-summary");
+    if (!keys.length) { box.hidden = true; box.innerHTML = ""; return; }
+    box.innerHTML = "<strong>Please correct " + keys.length + " field" + (keys.length > 1 ? "s" : "") + " to continue</strong><ul>" +
+      keys.map(function (k) { return '<li><a href="#err-' + k + '" data-jump="' + k + '">' + LABEL[k] + "</a>: " + esc(e[k]) + "</li>"; }).join("") + "</ul>";
+    box.hidden = false;
+    var y = box.getBoundingClientRect().top + window.pageYOffset - $(".site-header").offsetHeight - 16;
+    window.scrollTo(0, y);
+    box.focus({ preventScroll: true });
   }
 
-  /* ---------- Token + slip ---------- */
+  function focusField(k) {
+    var el = INPUTS[k] ? $(INPUTS[k]) : k === "gender" ? $('input[name="gender"]') : k === "doctor" ? $('input[name="doctor"]') : $(".slot:not(:disabled)") || $("#f-date");
+    if (!el) return;
+    var y = el.getBoundingClientRect().top + window.pageYOffset - $(".site-header").offsetHeight - 80;
+    window.scrollTo(0, y);
+    el.focus({ preventScroll: true });
+  }
+
+  /* ---------- Token & slip ---------- */
   function nextToken() {
-    var last = store(STORE_TOKEN);
-    var n = (typeof last === "number" && last >= TOKEN_START) ? last + 1 : TOKEN_START;
-    store(STORE_TOKEN, n);
+    var last = store(K_TOKEN);
+    var n = typeof last === "number" && last >= TOKEN_START ? last + 1 : TOKEN_START;
+    store(K_TOKEN, n);
     return "DC-" + n;
   }
-
-  function saveBooking(v) {
-    var all = getBookings();
-    var key = v.doctorId + "|" + v.date;
-    all[key] = (all[key] || []).concat(v.slot);
-    store(STORE_BOOKINGS, all);
+  function remember(v) {
+    var all = store(K_BOOKED) || {};
+    var k = v.doctorId + "|" + v.date;
+    all[k] = (all[k] || []).concat(v.slot);
+    store(K_BOOKED, all);
   }
-
   function fillSlip(v, token) {
-    var d = findDoctor(v.doctorId);
-    var digits = v.phone.replace(/[\s-]/g, "").replace(/^(\+91|0)/, "");
-    $("#slip-token").textContent = token;
-    $("#slip-name").textContent = v.name;
-    $("#slip-age").textContent = v.age + (+v.age === 1 ? " year" : " years");
-    $("#slip-gender").textContent = v.gender;
-    $("#slip-phone").textContent = "+91 " + digits.slice(0, 5) + " " + digits.slice(5);
-    $("#slip-symptoms").textContent = v.symptoms;
-    $("#slip-doctor").textContent = d.name;
-    $("#slip-specialty").textContent = d.specialty;
-    $("#slip-fee").textContent = fee(d.fee);
-    $("#slip-date").textContent = prettyDate(v.date);
-    $("#slip-time").textContent = v.slot;
-    $("#slip-issued").textContent = new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    document.title = "Appointment " + token + " · DOCTOR'S CLINIC";
+    var d = byId(v.doctorId), p = cleanPhone(v.phone);
+    $("#slip-token").textContent = "#" + token;
+    $("#t-name").textContent = v.name;
+    $("#t-agegender").textContent = v.age + " yrs / " + v.gender;
+    $("#t-phone").textContent = "+91 " + p.slice(0, 5) + " " + p.slice(5);
+    $("#t-symptoms").textContent = v.symptoms;
+    $("#t-doctor").textContent = d.name + ", " + d.qual;
+    $("#t-specialty").textContent = d.specialty;
+    $("#t-fee").textContent = inr(d.fee);
+    $("#t-date").textContent = longDate(v.date);
+    $("#t-slot").textContent = v.slot;
+    $("#slip-stamp").textContent = "Issued " + new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    document.title = "OPD Token " + token + " | DOCTOR'S CLINIC";
   }
 
-  function showSlipPanel() {
-    $("#booking-panel").hidden = true;
-    $("#slip-panel").hidden = false;
-    window.scrollTo(0, 0);
+  function defaultDate() {
+    var d = new Date();
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday closed: default to Monday
+    return iso(d);
   }
-  function showBookingPanel() {
+
+  function resetBooking() {
+    $("#booking-form").reset();
+    state.doctorId = null; state.slot = null;
+    $$('input[name="doctor"]').forEach(function (r) { r.checked = false; });
+    ORDER.forEach(clearErr);
+    $("#error-summary").hidden = true;
+    dateEl.value = defaultDate();
+    $("#date-hint").textContent = "OPD runs Monday to Saturday. Sunday is closed.";
+    renderSlots();
+    updateSummary();
     $("#slip-panel").hidden = true;
     $("#booking-panel").hidden = false;
-    document.title = "DOCTOR'S CLINIC";
+    document.title = "DOCTOR'S CLINIC | Multispecialty Outpatient Care";
   }
 
-  function resetForm() {
-    form.reset();
-    state.doctorId = null;
-    state.slot = null;
-    ORDER.forEach(clearError);
-    $("#form-error-summary").hidden = true;
-    $("#fee-amount").textContent = "Select a doctor";
-    updateDateHint();
-    renderSlots();
-  }
-
-  /* ---------- Wire up ---------- */
+  /* ---------- Init ---------- */
   function init() {
-    form = $("#booking-form");
-    slotGrid = $("#slot-grid");
-    dateInput = $("#appt-date");
+    dateEl = $("#f-date");
+    var t = new Date(), max = new Date(); max.setDate(max.getDate() + 60);
+    dateEl.min = iso(t); dateEl.max = iso(max); dateEl.value = defaultDate();
+    $("#year").textContent = t.getFullYear();
 
-    var today = new Date();
-    var max = new Date(); max.setDate(max.getDate() + 60);
-    dateInput.min = toISO(today);
-    dateInput.max = toISO(max);
-
-    wireImageFallbacks();
-    renderDoctorCards();
-    renderDoctorOptions();
+    wireImages();
+    renderDirectory();
+    renderDocOptions();
     renderSlots();
+    updateSummary();
 
-    // Any link to a view: also reset the slip back to the form when "Take Appointment" is clicked
+    // View links
     document.addEventListener("click", function (e) {
       var a = e.target.closest("[data-view-link]");
       if (!a) return;
-      var view = a.getAttribute("data-view-link");
-      if (view === "appointment" && !$("#slip-panel").hidden) { showBookingPanel(); resetForm(); }
-      if (location.hash === "#" + view) { e.preventDefault(); showView(view); }
-    });
-
-    $("#doctor-options").addEventListener("change", function (e) {
-      if (e.target.name === "doctor") selectDoctor(e.target.value);
-    });
-
-    slotGrid.addEventListener("click", function (e) {
-      var b = e.target.closest(".slot");
-      if (!b || b.disabled) return;
-      state.slot = b.getAttribute("data-slot");
-      $all(".slot", slotGrid).forEach(function (s) {
-        var on = s === b;
-        s.classList.toggle("is-selected", on);
-        s.setAttribute("aria-checked", on ? "true" : "false");
-      });
-      clearError("slot");
-    });
-
-    dateInput.addEventListener("change", function () {
-      clearError("date");
-      renderSlots();
-    });
-
-    // Clear an error as soon as the field is corrected
-    ["name", "age", "phone", "symptoms"].forEach(function (k) {
-      $(FIELDS[k]).addEventListener("input", function () { clearError(k); });
-    });
-    $all('input[name="gender"]').forEach(function (r) {
-      r.addEventListener("change", function () { clearError("gender"); });
-    });
-    // Phone: digits, spaces, + and - only
-    $("#patient-phone").addEventListener("input", function (e) {
-      var cleaned = e.target.value.replace(/[^\d+\s-]/g, "");
-      if (cleaned !== e.target.value) e.target.value = cleaned;
-    });
-
-    form.addEventListener("reset", function () {
-      setTimeout(resetForm, 0);
-    });
-
-    form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var v = collect();
-      var errors = validate(v);
-      // Guard against a slot that became unavailable
-      if (!errors.slot && !errors.date && !errors.doctor) {
-        var d = findDoctor(v.doctorId);
-        if (bookedSlotsFor(d, v.date)[v.slot]) errors.slot = "That slot has just been booked. Please choose another.";
-      }
-      showErrors(errors);
-      if (Object.keys(errors).length) { if (errors.slot) renderSlots(); return; }
-
-      var token = nextToken();
-      saveBooking(v);
-      fillSlip(v, token);
-      showSlipPanel();
+      var v = a.getAttribute("data-view-link");
+      if (v === "appointment" && !$("#slip-panel").hidden) resetBooking();
+      go(v, a.getAttribute("data-scroll-to"));
     });
 
-    $("#btn-print").addEventListener("click", function () { window.print(); });
-    $("#btn-new").addEventListener("click", function () {
-      showBookingPanel();
-      resetForm();
+    // Directory
+    $("#doctor-search").addEventListener("input", function (e) { filter.text = e.target.value; renderDirectory(); });
+    $("#filter-tabs").addEventListener("click", function (e) {
+      var b = e.target.closest(".tab"); if (b) setSpec(b.getAttribute("data-filter"));
+    });
+    $("#clear-search").addEventListener("click", function () { $("#doctor-search").value = ""; filter.text = ""; setSpec("All"); });
+    $("#doctor-grid").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-book]"); if (!b) return;
+      resetBooking();
+      selectDoctor(b.getAttribute("data-book"));
+      go("appointment");
+    });
+
+    // Form
+    $("#doc-options").addEventListener("change", function (e) { if (e.target.name === "doctor") selectDoctor(e.target.value); });
+    $("#slot-grid").addEventListener("click", function (e) {
+      var b = e.target.closest(".slot"); if (!b || b.disabled) return;
+      state.slot = b.getAttribute("data-slot");
+      $$(".slot").forEach(function (s) { var on = s === b; s.classList.toggle("is-selected", on); s.setAttribute("aria-checked", on); });
+      clearErr("slot");
+      updateSummary();
+    });
+    dateEl.addEventListener("change", function () { clearErr("date"); renderSlots(); });
+    ["name", "age", "phone", "symptoms"].forEach(function (k) {
+      $(INPUTS[k]).addEventListener("input", function () { clearErr(k); updateSummary(); });
+    });
+    $("#f-phone").addEventListener("input", function (e) {
+      var c = e.target.value.replace(/[^\d+\s-]/g, ""); if (c !== e.target.value) e.target.value = c;
+    });
+    $$('input[name="gender"]').forEach(function (r) { r.addEventListener("change", function () { clearErr("gender"); updateSummary(); }); });
+    $("#error-summary").addEventListener("click", function (e) {
+      var a = e.target.closest("[data-jump]"); if (!a) return;
+      e.preventDefault(); focusField(a.getAttribute("data-jump"));
+    });
+
+    $("#booking-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = collect(), errs = validate(v);
+      if (errs.slot) renderSlots();
+      showErrors(errs);
+      if (Object.keys(errs).length) return;
+      var token = nextToken();
+      remember(v);
+      fillSlip(v, token);
+      $("#booking-panel").hidden = true;
+      $("#slip-panel").hidden = false;
       window.scrollTo(0, 0);
     });
 
-    showView(currentHashView(), { keepScroll: true });
+    $("#btn-print").addEventListener("click", function () { window.print(); });
+    $("#btn-new").addEventListener("click", function () { resetBooking(); window.scrollTo(0, 0); });
+
+    showView(viewFromHash());
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
