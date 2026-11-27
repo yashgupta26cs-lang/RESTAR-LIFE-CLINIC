@@ -150,3 +150,14 @@ export function code39Bars(text) {
   });
   return { bars, width: x };
 }
+
+/* ---------------- Facility status ---------------- */
+/** { label: "Open 24/7" | "Open now" | "Closed now", tone } for a facility at the given time. */
+export function facilityStatus(f, now = new Date()) {
+  if (!f.open) return { label: "Open 24/7", tone: "coral" };
+  const m = now.getHours() * 60 + now.getMinutes();
+  const on = f.open.days.includes(now.getDay()) && m >= f.open.from && m < f.open.to;
+  return { label: on ? "Open now" : "Closed now", tone: on ? "mint" : "muted" };
+}
+/** "Ground Floor" from "Ground Floor, Wing A". */
+export const floorOf = (f) => f.location.split(",")[0];

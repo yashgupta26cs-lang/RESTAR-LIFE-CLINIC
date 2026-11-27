@@ -1,42 +1,16 @@
-import React, { useEffect, useRef } from "react";
-import { X, GraduationCap, Building2, CalendarDays, Sun, Sunset, BadgeCheck, CalendarPlus, MapPin, Check, Stethoscope } from "lucide-react";
+import React from "react";
+import { GraduationCap, Building2, CalendarDays, Sun, Sunset, BadgeCheck, CalendarPlus, MapPin, Check, Stethoscope } from "lucide-react";
 import { SPECIALTIES, SESSION_HOURS } from "../data.js";
 import { navigate } from "../router.js";
 import { inr, nextAvailable, weeklySchedule } from "../lib.js";
 import { DoctorPhoto, Icon, NextSlot } from "./ui.jsx";
-
-const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-function SubHead({ icon: I, children }) {
-  return <h3 className="mb-2.5 flex items-center gap-2 font-display text-[13px] font-bold uppercase tracking-[0.12em] text-ink"><I size={15} className="text-brand" aria-hidden="true" />{children}</h3>;
-}
+import ModalShell, { SubHead } from "./Modal.jsx";
 
 /**
- * Doctor info popup. Centered on every screen size, dimmed backdrop,
- * closes on X, Esc or a click outside. Focus stays inside while open.
+ * Doctor info popup (built on the shared ModalShell).
  * `onBook` overrides the CTA (the booking page uses it to select the doctor in place).
  */
 export default function DoctorModal({ doctor: d, onClose, onBook, selected = false }) {
-  const panelRef = useRef(null);
-  const closeRef = useRef(null);
-
-  useEffect(() => {
-    const last = document.activeElement;
-    closeRef.current?.focus({ preventScroll: true });
-    const onKey = (e) => {
-      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
-      if (e.key !== "Tab" || !panelRef.current) return;
-      const els = [...panelRef.current.querySelectorAll(FOCUSABLE)];
-      if (!els.length) return;
-      const first = els[0], lastEl = els[els.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
-      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; last?.focus?.({ preventScroll: true }); };
-  }, [onClose]);
-
   const spec = SPECIALTIES.find((s) => s.key === d.specialty);
   const next = nextAvailable(d);
   const week = weeklySchedule(d);
@@ -44,11 +18,7 @@ export default function DoctorModal({ doctor: d, onClose, onBook, selected = fal
   const book = () => { onClose(); if (onBook) onBook(d); else navigate("book", { doctor: d.id }); };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/55 p-3 backdrop-blur-[2px] animate-fadeIn sm:p-6 no-print"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()} data-testid="doctor-modal-backdrop">
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="doc-title" aria-describedby="doc-bio"
-        className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-[660px] flex-col overflow-hidden rounded-2xl bg-white shadow-float animate-popIn sm:max-h-[88vh]">
-
+    <ModalShell onClose={onClose} labelledBy="doc-title" describedBy="doc-bio" closeLabel="Close doctor profile">
         {/* Header: portrait, name, qualifications, specialty, registration */}
         <header className="relative flex gap-4 border-b border-line bg-cream p-4 pr-14 sm:gap-5 sm:p-6 sm:pr-16">
           <DoctorPhoto doctor={d} eager rounded="rounded-xl" className="h-[104px] w-[86px] shrink-0 border border-line shadow-card sm:h-[132px] sm:w-[110px]" />
@@ -61,10 +31,6 @@ export default function DoctorModal({ doctor: d, onClose, onBook, selected = fal
               <BadgeCheck size={13} className="text-mint-ink" aria-hidden="true" /> Reg. No: {d.regNo}
             </p>
           </div>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close doctor profile"
-            className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-all duration-200 ease-out hover:border-brand hover:text-brand">
-            <X size={18} />
-          </button>
         </header>
 
         {/* Scrollable body */}
@@ -160,7 +126,6 @@ export default function DoctorModal({ doctor: d, onClose, onBook, selected = fal
             {selected ? `Continue with ${d.name}` : `Book Appointment with ${d.name}`}
           </button>
         </footer>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

@@ -20,11 +20,17 @@ Everything below is invented demo content. Replace it with the clinic's real, ve
 - **Fees**: General Medicine ₹800, Pediatrics ₹900, Dermatology ₹1,000, Orthopedics ₹1,200, Cardiology ₹1,500, Neurology ₹1,600. There is a ₹0 online booking charge; the fee is paid at reception.
 - **Clinic details** (`CLINIC` in `src/data.js`): street address, landmark, reception landline, 24/7 emergency number, email and Clinical Establishment registration number.
 - **Accreditation badge** (`CLINIC.accreditation`): "NABH Entry-Level Certified" and the hygiene-audit line. Keep these only if the clinic actually holds that certification.
+- **Facility prices** (`FACILITIES[].price`), such as "CBC from ₹350".
 - **Statistics and testimonials** on the home page.
 - **Photos**: Unsplash stock images requested at fixed crop sizes, plus `public/images/` crops of the two reference images the clinic supplied (the 3D heart, and the portrait used for Dr. Meera Joshi). If a photo fails to load, a branded placeholder (or the doctor's initials) shows instead of a broken-image icon.
 
 ## Doctor info popup
 Clicking a doctor card, its photo, name or "View Profile" (Home and Overview), or "View Full Info" (booking page, on each doctor option and in the live summary) opens one shared popup. It shows the portrait, qualifications, registration number, experience, fee, languages, biography, education, affiliations, conditions treated and a weekly OPD schedule. It closes with the X, the Esc key or a click outside. Its "Book Appointment with Dr. ..." button opens the booking page with that doctor selected; on the booking page it selects the doctor in place, so the form keeps what was typed.
+
+## Hover preview card (desktop)
+`src/components/HoverPreview.jsx` provides `useHoverPreview()` and `<HoverPreviewCard />`: a 230 x 280 px photo card that follows the mouse over the Overview doctor and facility rows and the doctor rows on the booking page. It glides after the cursor with `requestAnimationFrame` and a 0.14 lerp, stays inside the viewport, never takes clicks (`pointer-events: none`), preloads every photo so rows swap instantly, and fades out when the cursor leaves the list. It is only switched on when `(hover: hover) and (pointer: fine)` matches, so phones and tablets get plain tap-to-open rows with small photos instead.
+
+Overview rows open the doctor popup or the facility popup (`src/components/FacilityModal.jsx`); each doctor row also has a direct Book button. On the booking page, clicking a row selects the doctor and the info button opens the doctor popup without losing what was typed.
 
 ## Bookings and tokens
 - Bookings are saved in the browser's `localStorage`, so they stay on that device only. A clinic running this for real needs a server to share them across devices.

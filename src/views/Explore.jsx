@@ -1,9 +1,107 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, X, SlidersHorizontal, Users, Building2, MapPin, Clock, CheckCircle2, SearchX } from "lucide-react";
+import { Search, X, SlidersHorizontal, Users, Building2, Clock, SearchX, Plus, MapPin } from "lucide-react";
 import { DOCTORS, SPECIALTIES, FACILITIES, IMAGES } from "../data.js";
-import { scrollToId } from "../router.js";
-import { Icon, Img } from "../components/ui.jsx";
-import DoctorCard from "../components/DoctorCard.jsx";
+import { navigate, scrollToId } from "../router.js";
+import { inr, nextAvailable, daysText, facilityStatus, floorOf } from "../lib.js";
+import { Icon, Img, DoctorPhoto } from "../components/ui.jsx";
+import { useProfile, useFacilityInfo } from "../components/Profile.jsx";
+import { useHoverPreview, HoverPreviewCard } from "../components/HoverPreview.jsx";
+
+const idx = (i) => `// ${String(i + 1).padStart(2, "0")}`;
+const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
+const STATUS_TAG = { coral: "tag-coral", mint: "tag-mint", muted: "tag-muted" };
+
+const DOCTOR_PREVIEWS = DOCTORS.map((d) => ({
+  key: d.id, src: d.photo, badge: "Profile", tone: "coral", pos: "top",
+  meta: `${d.specialty} • ${d.exp} Yrs Exp • ${inr(d.fee)}`, cta: "Click for full info +",
+}));
+const FACILITY_PREVIEWS = FACILITIES.map((f) => ({
+  key: f.id, src: IMAGES[f.img], badge: "Explore", tone: "brand",
+  meta: `${floorOf(f)} • ${f.hoursShort}`, cta: "Click for full info +",
+}));
+
+/** Editorial directory row for a doctor. Click anywhere opens the doctor popup; Book goes straight to booking. */
+function DoctorRow({ d, i, pv }) {
+  const openProfile = useProfile();
+  const next = nextAvailable(d);
+  const today = next?.label === "Today";
+  const open = () => { pv.hide(); openProfile(d); };
+  return (
+    <li {...pv.rowProps(d.id)}>
+      <article className="dir-row group" onClick={open} data-doctor={d.id}>
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <span className="w-10 shrink-0 pt-1.5 font-mono text-[12px] font-medium text-slate/70 transition-colors duration-200 group-hover:text-coral">{idx(i)}</span>
+          {!pv.fine && <DoctorPhoto doctor={d} rounded="rounded-lg" className="h-[68px] w-14 shrink-0" initialsClass="text-base" />}
+          <div className="min-w-0">
+            <h3 className="font-display text-lg font-bold leading-snug sm:text-[21px]">
+              <button type="button" onClick={stop(open)} className="text-left transition-colors duration-200 group-hover:text-brand">{d.name}</button>
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className="tag-brand">{d.specialty}</span>
+              <span className={today ? "tag-mint" : "tag-muted"}>
+                {today ? <><span className="h-1.5 w-1.5 rounded-full bg-mint" aria-hidden="true" />Available today</> : next ? `Next: ${next.label}` : "Fully booked"}
+              </span>
+              <span className="tag-muted">{d.exp} yrs exp</span>
+            </div>
+            <p className="mt-2 line-clamp-1 text-[13.5px] text-slate">{d.designation} · {d.conditions.slice(0, 3).join(", ")}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 border-t border-line pt-3 md:justify-end md:gap-6 md:border-0 md:pt-0">
+          <div className="hidden w-[230px] text-right xl:block">
+            <p className="truncate text-[13px] font-medium text-ink">{d.qual}</p>
+            <p className="truncate font-mono text-[11.5px] text-slate">Reg. {d.regNo} · {daysText(d.days)}</p>
+          </div>
+          <div className="md:w-[104px] md:text-right">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate">Consultation</p>
+            <p className="font-mono text-xl font-bold text-brand">{inr(d.fee)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="btn-primary min-h-[44px] px-5" onClick={stop(() => navigate("book", { doctor: d.id }))} aria-label={`Book appointment with ${d.name}`}>Book</button>
+            <button type="button" onClick={stop(open)} aria-label={`View full info for ${d.name}`}
+              className="dir-plus group-hover:border-coral group-hover:bg-coral group-hover:text-white"><Plus size={19} aria-hidden="true" /></button>
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+}
+
+/** Editorial directory row for a facility. Click opens the facility popup. */
+function FacilityRow({ f, i, pv }) {
+  const openFacility = useFacilityInfo();
+  const status = facilityStatus(f);
+  const open = () => { pv.hide(); openFacility(f); };
+  return (
+    <li {...pv.rowProps(f.id)}>
+      <article className="dir-row group" onClick={open} data-facility={f.id}>
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <span className="w-10 shrink-0 pt-1.5 font-mono text-[12px] font-medium text-slate/70 transition-colors duration-200 group-hover:text-brand">{idx(i)}</span>
+          {!pv.fine && <Img src={IMAGES[f.img]} alt="" className="h-14 w-16 shrink-0 rounded-lg" />}
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold leading-snug sm:text-[21px]">
+              <Icon name={f.icon} size={19} className="hidden shrink-0 text-brand sm:block" />
+              <button type="button" onClick={stop(open)} className="text-left transition-colors duration-200 group-hover:text-brand">{f.title}</button>
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className={STATUS_TAG[status.tone]}>{status.label}</span>
+              <span className="tag-muted">{floorOf(f)}</span>
+            </div>
+            <p className="mt-2 line-clamp-1 text-[13.5px] text-slate">{f.summary}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 border-t border-line pt-3 md:justify-end md:gap-6 md:border-0 md:pt-0">
+          <div className="hidden w-[210px] text-right lg:block">
+            <p className="flex items-center justify-end gap-1.5 font-mono text-[12.5px] text-ink"><Clock size={13} className="text-brand" aria-hidden="true" />{f.hoursShort}</p>
+            <p className="mt-0.5 flex items-center justify-end gap-1.5 truncate text-[12px] text-slate"><MapPin size={12} className="text-brand" aria-hidden="true" />{f.location}</p>
+          </div>
+          <p className="text-[13.5px] font-bold text-brand md:w-[210px] md:text-right">{f.price}</p>
+          <button type="button" onClick={stop(open)} aria-label={`View details for ${f.title}`}
+            className="dir-plus group-hover:border-brand group-hover:bg-brand group-hover:text-cream"><Plus size={19} aria-hidden="true" /></button>
+        </div>
+      </article>
+    </li>
+  );
+}
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 function matches(d, q) {
@@ -37,6 +135,8 @@ export default function Explore({ params }) {
     return r;
   }, [q, spec, sort]);
 
+  const docPv = useHoverPreview();
+  const facPv = useHoverPreview();
   const jump = (id) => { setTab(id); scrollToId(id); };
   const reset = () => { setQ(""); setSpec("All"); setSort("recommended"); };
 
@@ -48,7 +148,7 @@ export default function Explore({ params }) {
           <div>
             <p className="eyebrow mb-3">Overview / Explore</p>
             <h1 className="font-display text-4xl font-extrabold leading-tight sm:text-5xl">Our doctors &amp; clinic facilities</h1>
-            <p className="lead mt-4 max-w-xl">Find the right specialist by name, department or symptom, compare timings and fees, and see the diagnostics available on site.</p>
+            <p className="lead mt-4 max-w-xl">Find the right specialist by name, department or symptom, compare fees and next available slots, and see the diagnostics available on site. Tap or click any row for full details.</p>
           </div>
           <Img src={IMAGES.lounge} alt="Patient waiting lounge with teal sofas" eager className="hidden h-48 rounded-xl border border-line lg:block" />
         </div>
@@ -111,9 +211,9 @@ export default function Explore({ params }) {
         </p>
 
         {list.length ? (
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((d) => <DoctorCard key={d.id} doctor={d} />)}
-          </div>
+          <ol {...docPv.listProps} className="mt-6 space-y-3" aria-label="Doctors">
+            {list.map((d, i) => <DoctorRow key={d.id} d={d} i={i} pv={docPv} />)}
+          </ol>
         ) : (
           <div className="mt-6 card flex flex-col items-center p-12 text-center">
             <SearchX size={36} className="text-slate" aria-hidden="true" />
@@ -130,31 +230,14 @@ export default function Explore({ params }) {
           <p className="eyebrow mb-2">B. Facilities &amp; infrastructure</p>
           <h2 className="h2">Available facilities</h2>
           <p className="lead mt-3 max-w-2xl">Everything most visits need, from blood tests to X-rays and medicines, is on site, so you don't have to travel between centres.</p>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {FACILITIES.map((f) => (
-              <article key={f.title} className="card card-hover group flex flex-col overflow-hidden">
-                <div className="relative">
-                  <Img src={IMAGES[f.img]} alt={f.title} className="h-48" imgClass="transition-transform duration-500 ease-out group-hover:scale-[1.03]" />
-                  <span className="absolute left-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 text-brand shadow-card"><Icon name={f.icon} size={20} /></span>
-                  {f.hours === "Open 24/7" && <span className="absolute right-3 top-3 badge bg-coral text-white">24/7</span>}
-                </div>
-                <div className="flex flex-1 flex-col p-5">
-                  <h3 className="font-display text-lg font-bold">{f.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-slate">{f.desc}</p>
-                  <dl className="mt-4 space-y-1.5 text-[13px]">
-                    <div className="flex items-center gap-2 text-slate"><Clock size={14} className="text-brand" aria-hidden="true" /><dt className="sr-only">Hours</dt><dd className="font-mono">{f.hours}</dd></div>
-                    <div className="flex items-center gap-2 text-slate"><MapPin size={14} className="text-brand" aria-hidden="true" /><dt className="sr-only">Location</dt><dd>{f.location}</dd></div>
-                  </dl>
-                  <ul className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13.5px]">
-                    {f.features.map((x) => <li key={x} className="flex items-start gap-2"><CheckCircle2 size={15} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />{x}</li>)}
-                  </ul>
-                </div>
-              </article>
-            ))}
-          </div>
+          <ol {...facPv.listProps} className="mt-10 space-y-3" aria-label="Facilities">
+            {FACILITIES.map((f, i) => <FacilityRow key={f.id} f={f} i={i} pv={facPv} />)}
+          </ol>
         </div>
       </section>
 
+      <HoverPreviewCard preview={docPv} items={DOCTOR_PREVIEWS} />
+      <HoverPreviewCard preview={facPv} items={FACILITY_PREVIEWS} />
     </>
   );
 }

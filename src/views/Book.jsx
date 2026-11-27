@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { User, Stethoscope, CalendarDays, Sun, Sunset, AlertCircle, Check, Printer, CalendarPlus, ShieldCheck, Lock, Clock, Ticket, Phone, ArrowLeft, Info, BadgeCheck, Siren, MapPin } from "lucide-react";
+import { User, Stethoscope, CalendarDays, Sun, Sunset, AlertCircle, Check, Printer, CalendarPlus, ShieldCheck, Lock, Clock, Ticket, Phone, ArrowLeft, Info, BadgeCheck, Siren, MapPin, Plus } from "lucide-react";
 import { DOCTORS, SPECIALTIES, SYMPTOM_TAGS, CLINIC, SESSION_HOURS } from "../data.js";
 import { navigate, scrollToId } from "../router.js";
 import { DAY, inr, doctorById, todayISO, isoDate, parseISO, prettyDate, slotsFor, bookedSlots, slotMinutes, cleanPhone, createBooking, daysText, nextAvailable } from "../lib.js";
-import { DoctorPhoto, SpecBadge, NextSlot } from "../components/ui.jsx";
+import { DoctorPhoto, SpecBadge } from "../components/ui.jsx";
+import { useHoverPreview, HoverPreviewCard } from "../components/HoverPreview.jsx";
 import { useProfile } from "../components/Profile.jsx";
 import Slip from "../components/Slip.jsx";
 
@@ -90,6 +91,19 @@ export default function Book({ params }) {
   };
 
   // "View Full Info": the popup's CTA selects the doctor here instead of leaving the page, so the form keeps its progress.
+  // Cursor-following preview for the doctor list (desktop mouse only).
+  const bpv = useHoverPreview();
+  const previews = useMemo(() => DOCTORS.map((d) => {
+    const on = d.id === doctorId, next = nextAvailable(d);
+    return {
+      key: d.id, src: d.photo, pos: "top",
+      badge: on ? "Selected" : "Select", badgeSign: on ? "✓" : "+", tone: on ? "mint" : "brand",
+      lines: [d.qual, next ? `Next available: ${next.label} · ${next.slot}` : "Fully booked for 3 weeks"],
+      meta: `${d.specialty} • ${d.exp} Yrs Exp • ${inr(d.fee)}`,
+      cta: on ? "Selected for this visit ✓" : "Click to select doctor +",
+    };
+  }), [doctorId, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const viewInfo = (d) => openProfile(d, {
     selected: d.id === doctorId,
     onBook: (doc) => { chooseDoctor(doc.id); setFilter((f) => (f === "All" || f === doc.specialty ? f : doc.specialty)); scrollToId("step-slot", 16); },
@@ -231,35 +245,37 @@ export default function Book({ params }) {
                 <button key={s} type="button" aria-pressed={filter === s} onClick={() => setFilter(s)} className={filter === s ? "chip-on" : "chip-off"}>{s}</button>
               ))}
             </div>
-            <div role="radiogroup" aria-label="Doctor" className="grid gap-3 sm:grid-cols-2">
-              {visibleDocs.map((d) => {
+            <div role="radiogroup" aria-label="Doctor" {...bpv.listProps} className="space-y-2">
+              {visibleDocs.map((d, i) => {
                 const on = d.id === doctorId;
+                const next = !bpv.fine ? nextAvailable(d) : null;
                 return (
-                  <div key={d.id} className={`flex flex-col overflow-hidden rounded-xl border transition-all duration-200 ease-out ${on ? "border-brand bg-brand-soft ring-2 ring-brand/20" : "border-line bg-white hover:border-brand/50"}`}>
-                    <button type="button" role="radio" aria-checked={on} onClick={() => chooseDoctor(d.id)}
-                      className={`flex items-center gap-3 p-3 text-left transition-colors duration-200 ${on ? "" : "hover:bg-cream"}`}>
-                      <DoctorPhoto doctor={d} rounded="rounded-lg" className="h-14 w-14 shrink-0" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-display text-[15px] font-bold">{d.name}</span>
-                        <span className="block truncate text-[12.5px] text-slate">{d.specialty} · {daysText(d.days)}</span>
-                        <span className="block truncate font-mono text-[11px] text-slate">Reg. No: {d.regNo}</span>
-                      </span>
-                      <span className="flex flex-col items-end gap-1">
-                        <span className="font-mono text-[14px] font-bold text-brand">{inr(d.fee)}</span>
-                        <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-200 ${on ? "border-brand bg-brand text-cream" : "border-line"}`}>{on && <Check size={12} aria-hidden="true" />}</span>
-                      </span>
-                    </button>
-                    <div className={`flex items-center justify-between gap-2 border-t px-3 py-2 ${on ? "border-brand/15" : "border-line"}`}>
-                      <NextSlot next={nextAvailable(d)} className="min-w-0 truncate !px-2 !py-0.5 text-[11px]" />
-                      <button type="button" onClick={() => viewInfo(d)} aria-label={`View full info for ${d.name}`}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[12.5px] font-semibold text-brand transition-colors duration-200 hover:bg-white hover:underline">
-                        <Info size={14} aria-hidden="true" /> View Full Info
-                      </button>
+                  <div key={d.id} {...bpv.rowProps(d.id)} onClick={() => chooseDoctor(d.id)} data-doctor-row={d.id}
+                    className={`group flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 transition-[border-color,background-color,box-shadow] duration-200 ease-out sm:gap-4 sm:px-4 ${on ? "border-brand bg-brand-soft ring-2 ring-brand/15" : "border-line bg-white hover:border-brand/50 hover:bg-[#FFFDFA] hover:shadow-card"}`}>
+                    <span className="hidden w-9 shrink-0 font-mono text-[11.5px] font-medium text-slate/70 transition-colors duration-200 group-hover:text-brand sm:block">// {String(i + 1).padStart(2, "0")}</span>
+                    {!bpv.fine && <DoctorPhoto doctor={d} rounded="rounded-lg" className="h-12 w-12 shrink-0" initialsClass="text-[13px]" />}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-[15px] font-bold leading-snug">{d.name}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="tag-brand">{d.specialty}</span>
+                        <span className="text-[12px] text-slate">{d.exp} yrs exp</span>
+                        {next && <span className={`text-[11.5px] font-semibold ${next.label === "Today" ? "text-mint-ink" : "text-slate"}`}>· {next.label === "Today" ? "Today" : next.label} {next.slot}</span>}
+                      </div>
                     </div>
+                    <span className="shrink-0 font-mono text-[15px] font-bold text-brand">{inr(d.fee)}</span>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); bpv.hide(); viewInfo(d); }} aria-label={`View full info for ${d.name}`} title="Doctor info"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent text-slate transition-all duration-200 hover:border-line hover:bg-white hover:text-brand">
+                      <Info size={18} aria-hidden="true" />
+                    </button>
+                    <button type="button" role="radio" aria-checked={on} aria-label={`Select ${d.name}, ${d.specialty}, ${inr(d.fee)}`} onClick={(e) => { e.stopPropagation(); chooseDoctor(d.id); }}
+                      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ease-out ${on ? "border-brand bg-brand text-cream" : "border-line bg-white text-slate group-hover:border-coral group-hover:bg-coral group-hover:text-white"}`}>
+                      {on ? <Check size={16} strokeWidth={3} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}
+                    </button>
                   </div>
                 );
               })}
             </div>
+            <HoverPreviewCard preview={bpv} items={previews} />
             <Err id="e-doctor" msg={errors.doctor} />
           </StepCard>
 

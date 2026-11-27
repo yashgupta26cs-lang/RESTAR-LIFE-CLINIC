@@ -1,12 +1,18 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import DoctorModal from "./DoctorModal.jsx";
+import FacilityModal from "./FacilityModal.jsx";
 
 const ProfileContext = createContext(() => {});
+const FacilityContext = createContext(() => {});
 
-/** One doctor info popup for the whole app. Call `openProfile(doctor, { onBook, selected })` from any page. */
+/**
+ * One doctor popup and one facility popup for the whole app.
+ *   openProfile(doctor, { onBook, selected })   openFacility(facility)
+ */
 export function ProfileProvider({ children }) {
   const [state, setState] = useState(null);
-  const openProfile = useCallback((doctor, opts = {}) => setState({ doctor, ...opts }), []);
+  const openProfile = useCallback((doctor, opts = {}) => setState({ kind: "doctor", doctor, ...opts }), []);
+  const openFacility = useCallback((facility) => setState({ kind: "facility", facility }), []);
   const close = useCallback(() => setState(null), []);
   // Browser back / any route change closes the popup.
   useEffect(() => {
@@ -16,10 +22,14 @@ export function ProfileProvider({ children }) {
   }, []);
   return (
     <ProfileContext.Provider value={openProfile}>
-      {children}
-      {state && <DoctorModal key={state.doctor.id} doctor={state.doctor} onBook={state.onBook} selected={state.selected} onClose={close} />}
+      <FacilityContext.Provider value={openFacility}>
+        {children}
+        {state?.kind === "doctor" && <DoctorModal key={state.doctor.id} doctor={state.doctor} onBook={state.onBook} selected={state.selected} onClose={close} />}
+        {state?.kind === "facility" && <FacilityModal key={state.facility.id} facility={state.facility} onClose={close} />}
+      </FacilityContext.Provider>
     </ProfileContext.Provider>
   );
 }
 
 export const useProfile = () => useContext(ProfileContext);
+export const useFacilityInfo = () => useContext(FacilityContext);
