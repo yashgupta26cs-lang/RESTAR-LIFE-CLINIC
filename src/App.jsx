@@ -146,7 +146,7 @@ export default function App() {
         <div className="border-t border-white/10">
           <div className="container-x flex flex-wrap justify-between gap-3 py-6 text-xs text-cream/50">
             <p>© {new Date().getFullYear()} DOCTOR'S CLINIC. All rights reserved.</p>
-            <p>Demo site: doctors, registration numbers, fees, contact details and accreditation are placeholders.</p>
+            <p>Demo site: doctors, registration numbers, fees, contact details and accreditation are placeholders. <span className="whitespace-nowrap text-cream/40">Version: {__BUILD_LABEL__}</span></p>
           </div>
         </div>
       </footer>
