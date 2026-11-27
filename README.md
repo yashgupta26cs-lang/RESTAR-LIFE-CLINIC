@@ -30,7 +30,7 @@ Clicking a doctor card, its photo, name or "View Profile" (Home and Overview), o
 ## Hover preview card (desktop)
 `src/components/HoverPreview.jsx` provides `useHoverPreview()` and `<HoverPreviewCard />`: a 230 x 280 px photo card that follows the mouse over the Overview doctor and facility rows and the doctor rows on the booking page. It glides after the cursor with `requestAnimationFrame` and a 0.14 lerp, stays inside the viewport, never takes clicks (`pointer-events: none`), preloads every photo so rows swap instantly, and fades out when the cursor leaves the list. It is only switched on when `(hover: hover) and (pointer: fine)` matches, so phones and tablets get plain tap-to-open rows with small photos instead.
 
-Overview rows open the doctor popup or the facility popup (`src/components/FacilityModal.jsx`); each doctor row also has a direct Book button. On the booking page, clicking a row selects the doctor and the info button opens the doctor popup without losing what was typed.
+The Home page "Meet our senior doctors" section uses the same doctor rows and hover card. Overview rows open the doctor popup or the facility popup (`src/components/FacilityModal.jsx`); each doctor row also has a direct Book button. On the booking page, clicking a row selects the doctor and the info button opens the doctor popup without losing what was typed.
 
 ## Bookings and tokens
 - Bookings are saved in the browser's `localStorage`, so they stay on that device only. A clinic running this for real needs a server to share them across devices.

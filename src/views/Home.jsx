@@ -4,7 +4,8 @@ import { DOCTORS, SPECIALTIES, IMAGES, TESTIMONIALS, CLINIC } from "../data.js";
 import { navigate } from "../router.js";
 import { nextAvailable, doctorById } from "../lib.js";
 import { Icon, Img, SectionHead, Stars, DoctorPhoto } from "../components/ui.jsx";
-import DoctorCard from "../components/DoctorCard.jsx";
+import { useHoverPreview, HoverPreviewCard } from "../components/HoverPreview.jsx";
+import { DoctorRow, DOCTOR_PREVIEWS } from "../components/Directory.jsx";
 import { useProfile } from "../components/Profile.jsx";
 
 function clinicStatus(now = new Date()) {
@@ -185,16 +186,17 @@ function Specialties() {
 }
 
 function FeaturedDoctors() {
-  const list = DOCTORS.filter((d) => d.featured).slice(0, 3);
+  const pv = useHoverPreview();
   return (
     <section className="section bg-sand">
       <div className="container-x">
-        <SectionHead eyebrow="Featured specialists" title="Meet some of our senior doctors" lead="Every consultant sees patients personally. No juniors standing in, no rushed five-minute visits."
-          action={<button type="button" className="btn-secondary" onClick={() => navigate("explore", { tab: "doctors" })}>View all 8 doctors <ArrowRight size={16} aria-hidden="true" /></button>} />
-        <div className="grid gap-6 md:grid-cols-3">
-          {list.map((d) => <DoctorCard key={d.id} doctor={d} compact />)}
-        </div>
+        <SectionHead eyebrow="Our specialists" title="Meet our senior doctors" lead="Every consultant sees patients personally. No juniors standing in, no rushed five-minute visits. Tap or click a doctor for the full profile."
+          action={<button type="button" className="btn-secondary" onClick={() => navigate("explore", { tab: "doctors" })}>Search &amp; filter doctors <ArrowRight size={16} aria-hidden="true" /></button>} />
+        <ol {...pv.listProps} className="space-y-3" aria-label="Doctors">
+          {DOCTORS.map((d, i) => <DoctorRow key={d.id} d={d} i={i} pv={pv} />)}
+        </ol>
       </div>
+      <HoverPreviewCard preview={pv} items={DOCTOR_PREVIEWS} />
     </section>
   );
 }
