@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Search, ArrowRight, CalendarPlus, Compass, ShieldCheck, Users, Building2, Timer, Ticket, CheckCircle2, Stethoscope, ClipboardList, FileCheck2, Quote, Sparkles, HeartPulse } from "lucide-react";
-import { DOCTORS, SPECIALTIES, IMAGES, LOCAL, TESTIMONIALS, CLINIC } from "../data.js";
+import { Search, ArrowRight, CalendarPlus, Compass, ShieldCheck, Users, Building2, Timer, Ticket, CheckCircle2, Stethoscope, ClipboardList, FileCheck2, Quote, Sparkles, ConciergeBell, BadgeCheck } from "lucide-react";
+import { DOCTORS, SPECIALTIES, IMAGES, TESTIMONIALS, CLINIC } from "../data.js";
 import { navigate } from "../router.js";
 import { nextAvailable, doctorById } from "../lib.js";
 import { Icon, Img, SectionHead, Stars, DoctorPhoto } from "../components/ui.jsx";
 import DoctorCard from "../components/DoctorCard.jsx";
+import { useProfile } from "../components/Profile.jsx";
 
 function clinicStatus(now = new Date()) {
   const day = now.getDay(), m = now.getHours() * 60 + now.getMinutes();
@@ -13,6 +14,7 @@ function clinicStatus(now = new Date()) {
 }
 
 function Hero() {
+  const openProfile = useProfile();
   const [q, setQ] = useState("");
   const status = clinicStatus();
   const soonest = useMemo(() => {
@@ -60,21 +62,31 @@ function Hero() {
 
           <div className="mt-9 flex items-center gap-4">
             <div className="flex -space-x-3">
-              {["arjun-mehta", "priya-nair", "vikram-rao", "kavya-iyer"].map((id) => (
-                <DoctorPhoto key={id} doctor={doctorById(id)} rounded="rounded-full" className="h-10 w-10 border-2 border-cream" initialsClass="text-[12px]" />
-              ))}
+              {["arjun-mehta", "priya-nair", "vikram-rao", "kavya-iyer"].map((id) => {
+                const d = doctorById(id);
+                return (
+                  <button key={id} type="button" onClick={() => openProfile(d)} aria-label={`View profile of ${d.name}`} title={d.name}
+                    className="relative rounded-full transition-transform duration-200 ease-out hover:z-10 hover:-translate-y-0.5">
+                    <DoctorPhoto doctor={d} rounded="rounded-full" className="h-10 w-10 border-2 border-cream" initialsClass="text-[12px]" />
+                  </button>
+                );
+              })}
             </div>
             <p className="text-[13.5px] text-slate"><Stars /> <span className="ml-1 font-semibold text-ink">4.9</span> from 3,200+ patient reviews</p>
           </div>
+          <p className="mt-4 inline-flex items-center gap-2 text-[13px] text-slate">
+            <BadgeCheck size={16} className="text-mint-ink" aria-hidden="true" />
+            <span><span className="font-semibold text-ink">{CLINIC.accreditation.title}</span> · {CLINIC.accreditation.hygiene}</span>
+          </p>
         </div>
 
         {/* Showcase */}
         <div className="relative mx-auto w-full max-w-[540px]">
           <figure className="relative">
-            <Img src={IMAGES.hero} alt="Detailed 3D model of the human heart, representing the clinic's cardiac care" eager className="aspect-[4/5] rounded-2xl border border-line shadow-float" />
+            <Img src={IMAGES.hero} alt="Bright, modern reception desk at the clinic entrance" eager className="aspect-[4/5] rounded-2xl border border-line shadow-float" />
             <figcaption className="absolute bottom-4 left-4 hidden sm:flex items-center gap-3 rounded-lg bg-ink/60 px-4 py-2.5 text-[12.5px] text-cream">
-              <span className="flex items-center gap-2"><HeartPulse size={15} className="text-coral" aria-hidden="true" /> Advanced Cardiac Care Unit</span>
-              <span className="font-mono text-cream/80">Wing B</span>
+              <span className="flex items-center gap-2"><ConciergeBell size={15} className="text-mint" aria-hidden="true" /> Reception &amp; registration</span>
+              <span className="font-mono text-cream/80">Ground floor</span>
             </figcaption>
           </figure>
 
@@ -99,13 +111,13 @@ function Hero() {
 
           {/* Specialist card (portrait from the supplied reference image) */}
           {featured && (
-            <button type="button" onClick={() => navigate("book", { doctor: featured.id })}
+            <button type="button" onClick={() => openProfile(featured)} aria-label={`View profile of ${featured.name}`}
               className="absolute -bottom-6 -right-2 flex w-[260px] items-center gap-3 rounded-xl border border-line bg-white p-3 text-left shadow-float transition-all duration-200 ease-out hover:-translate-y-0.5 sm:-right-8">
               <DoctorPhoto doctor={featured} rounded="rounded-lg" className="h-16 w-16 shrink-0" initialsClass="text-lg" />
               <span className="min-w-0">
                 <span className="block font-display text-[14px] font-bold">{featured.name}</span>
                 <span className="block text-[12px] text-slate">{featured.specialty} · {featured.exp}+ yrs</span>
-                <span className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-brand">Book a slot <ArrowRight size={13} aria-hidden="true" /></span>
+                <span className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-brand">View profile <ArrowRight size={13} aria-hidden="true" /></span>
               </span>
             </button>
           )}
@@ -189,16 +201,16 @@ function FeaturedDoctors() {
 
 function Showcase() {
   const tiles = [
-    { src: IMAGES.hero, alt: "3D heart model in the cardiac care unit", cap: "Advanced cardiac care", sub: "ECG, echo referrals and heart-health checks", cls: "md:col-span-2 md:row-span-2 min-h-[320px]" },
-    { src: IMAGES.lobby, alt: "Bright, clean clinic corridor", cap: "Calm, hygienic spaces", sub: "Hospital-grade cleaning every 2 hours", cls: "min-h-[200px]" },
-    { src: IMAGES.lab, alt: "Automated pathology lab", cap: "Automated pathology", sub: "Same-day reports", cls: "min-h-[200px]" },
-    { src: IMAGES.pharmacy, alt: "In-house pharmacy shelves", cap: "24/7 pharmacy", sub: "Ground floor lobby", cls: "min-h-[200px]" },
-    { src: IMAGES.suites, alt: "Private consultation suite", cap: "Private consult suites", sub: "Sound-insulated rooms", cls: "min-h-[200px]" },
+    { src: IMAGES.lounge, alt: "Clean patient waiting lounge with teal sofas", cap: "Patient waiting lounge", sub: "Air-purified, with a live token display board", cls: "md:col-span-2 md:row-span-2 min-h-[320px]" },
+    { src: IMAGES.reception, alt: "Registration counter at the front desk", cap: "Front desk & registration", sub: "Show your token, pay and go in", cls: "min-h-[200px]" },
+    { src: IMAGES.consult, alt: "Doctor consulting a patient in a private room", cap: "Consultation rooms", sub: "8 private, sound-insulated rooms", cls: "min-h-[200px]" },
+    { src: IMAGES.cardiac, alt: "3D heart model in the cardiac care unit", cap: "Cardiac care unit", sub: "ECG and heart-health checks", cls: "min-h-[200px]" },
+    { src: IMAGES.labTubes, alt: "Blood sample tubes in the pathology lab", cap: "Automated pathology", sub: "Same-day reports", cls: "min-h-[200px]" },
   ];
   return (
     <section className="section">
       <div className="container-x">
-        <SectionHead eyebrow="Inside the clinic" title="Built for comfort, hygiene and fast diagnostics"
+        <SectionHead eyebrow="Clinic gallery" title="Built for comfort, hygiene and fast diagnostics"
           action={<button type="button" className="btn-ghost" onClick={() => navigate("explore", { tab: "facilities" })}>All facilities <ArrowRight size={16} aria-hidden="true" /></button>} />
         <div className="grid auto-rows-[200px] gap-4 md:grid-cols-4">
           {tiles.map((t) => (
@@ -217,20 +229,22 @@ function Showcase() {
 }
 
 function About() {
-  const points = ["Consultants with 9 to 21 years of experience", "Lab, X-ray, ECG and pharmacy in the same building", "Transparent fees, shown before you book", "Digital OPD tokens: no queue at the front desk"];
+  const points = ["Consultants with 9 to 21 years of experience", "Every doctor's medical registration number shown on their profile", "Lab, X-ray, ECG and pharmacy in the same building", "Transparent fees, shown before you book", "Digital OPD tokens: no queue at the front desk"];
   const meera = doctorById("meera-joshi");
+  const openProfile = useProfile();
   return (
     <section className="section bg-white border-y border-line">
       <div className="container-x grid items-center gap-14 lg:grid-cols-2">
         <div className="relative">
-          <Img src={IMAGES.corridor} alt="Clinic consultation area" className="aspect-[5/4] rounded-2xl border border-line" />
-          <figure className="absolute -bottom-8 right-4 w-44 rounded-xl border border-line bg-white p-2 shadow-float sm:right-8">
+          <Img src={IMAGES.about} alt="Doctor checking a patient's blood pressure during a consultation" className="aspect-[5/4] rounded-2xl border border-line" />
+          <button type="button" onClick={() => openProfile(meera)} aria-label={`View profile of ${meera.name}`}
+            className="absolute -bottom-8 right-4 w-44 rounded-xl border border-line bg-white p-2 text-left shadow-float transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lift sm:right-8">
             <DoctorPhoto doctor={meera} rounded="rounded-lg" className="aspect-square" />
-            <figcaption className="px-1 pb-1 pt-2">
-              <p className="font-display text-[13px] font-bold">{meera.name}</p>
-              <p className="text-[11.5px] text-slate">Cardiologist · Tue, Thu, Sat</p>
-            </figcaption>
-          </figure>
+            <span className="block px-1 pb-1 pt-2">
+              <span className="block font-display text-[13px] font-bold">{meera.name}</span>
+              <span className="block text-[11.5px] text-slate">Cardiologist · Tue, Thu, Sat</span>
+            </span>
+          </button>
         </div>
         <div>
           <p className="eyebrow mb-3"><Sparkles size={14} aria-hidden="true" /> About the clinic</p>

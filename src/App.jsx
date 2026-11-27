@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Clock, Phone, MapPin, Siren, Menu, X, CalendarPlus, Mail, ArrowUpRight } from "lucide-react";
+import { Clock, Phone, MapPin, Siren, Menu, X, CalendarPlus, Mail, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { CLINIC, SPECIALTIES } from "./data.js";
 import { navigate, useRoute } from "./router.js";
 import { seedOnce } from "./lib.js";
 import Logo from "./components/Logo.jsx";
+import { ProfileProvider } from "./components/Profile.jsx";
 import Home from "./views/Home.jsx";
 import Explore from "./views/Explore.jsx";
 import Book from "./views/Book.jsx";
 import FindToken from "./views/FindToken.jsx";
+
+// Seed sample bookings before the first render, so a direct #/token?q=DC-099 link finds them.
+seedOnce();
 
 const NAV = [
   { route: "home", label: "Home" },
@@ -20,7 +24,6 @@ export default function App() {
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => { seedOnce(); }, []);
   useEffect(() => { setMenu(false); }, [route, params.doctor, params.spec, params.q]);
   useEffect(() => {
     const titles = { home: "Multispecialty OPD & Diagnostics", explore: "Doctors & Facilities", book: "Take Appointment", token: "Find My Token" };
@@ -33,15 +36,20 @@ export default function App() {
   }, []);
 
   return (
+    <ProfileProvider>
     <div className="flex min-h-screen flex-col">
       {/* Announcement strip */}
       <div className="bg-brand text-[13px] text-cream no-print">
         <div className="container-x flex flex-wrap items-center justify-center gap-x-8 gap-y-1.5 py-2.5 sm:justify-between">
           <span className="inline-flex items-center gap-2"><Clock size={14} aria-hidden="true" className="text-mint" /><span className="text-cream/70">OPD Hours</span> Mon–Sat: 8:00 AM – 8:00 PM</span>
+          <a href={CLINIC.phoneHref} className="hidden items-center gap-2 transition-colors duration-200 hover:text-white sm:inline-flex">
+            <Phone size={14} aria-hidden="true" className="text-mint" /><span className="text-cream/70">Reception</span><span className="font-mono font-semibold">{CLINIC.phone}</span>
+          </a>
           <a href={CLINIC.emergencyHref} className="inline-flex items-center gap-2 transition-colors duration-200 hover:text-white">
             <Siren size={14} aria-hidden="true" className="text-coral" /><span className="text-cream/70">24/7 Emergency</span><span className="font-mono font-semibold">{CLINIC.emergency}</span>
           </a>
-          <span className="hidden items-center gap-2 md:inline-flex"><MapPin size={14} aria-hidden="true" className="text-mint" />{CLINIC.addressShort}</span>
+          <span className="hidden items-center gap-2 2xl:inline-flex"><MapPin size={14} aria-hidden="true" className="text-mint" />{CLINIC.addressShort}</span>
+          <span className="hidden items-center gap-1.5 rounded-full border border-mint/40 bg-white/10 px-2.5 py-0.5 text-[12px] font-semibold xl:inline-flex"><ShieldCheck size={13} aria-hidden="true" className="text-mint" />{CLINIC.accreditation.title}</span>
         </div>
       </div>
 
@@ -97,8 +105,8 @@ export default function App() {
           <div>
             <Logo size={44} inverse sub="OPD & Diagnostics" />
             <p className="mt-6 max-w-xs text-sm leading-relaxed text-cream/70">Warm, unhurried multispecialty care with modern diagnostics under one roof.</p>
-            <p className="mt-5 flex gap-2.5 text-sm text-cream/80"><MapPin size={16} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />{CLINIC.address}</p>
-            <p className="mt-3 flex items-center gap-2.5 text-sm"><Phone size={16} className="text-mint" aria-hidden="true" /><a href={CLINIC.phoneHref} className="font-mono hover:text-white">{CLINIC.phone}</a></p>
+            <p className="mt-5 flex gap-2.5 text-sm text-cream/80"><MapPin size={16} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" /><span>{CLINIC.address}<span className="mt-0.5 block text-[12.5px] text-cream/55">{CLINIC.landmark}</span></span></p>
+            <p className="mt-3 flex items-center gap-2.5 text-sm"><Phone size={16} className="text-mint" aria-hidden="true" /><span className="text-cream/60">Reception</span><a href={CLINIC.phoneHref} className="font-mono hover:text-white">{CLINIC.phone}</a></p>
             <p className="mt-2 flex items-center gap-2.5 text-sm"><Mail size={16} className="text-mint" aria-hidden="true" /><a href={`mailto:${CLINIC.email}`} className="text-cream/80 hover:text-white">{CLINIC.email}</a></p>
           </div>
           <div>
@@ -125,15 +133,24 @@ export default function App() {
               <span className="mt-2 block font-mono text-2xl font-bold text-cream">{CLINIC.emergency}</span>
             </a>
             <p className="mt-4 text-sm leading-relaxed text-cream/60">For chest pain, breathing difficulty or injury, come straight to the Emergency &amp; Triage unit at the rear entrance.</p>
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint/15 text-mint"><ShieldCheck size={20} aria-hidden="true" /></span>
+              <span className="text-[12.5px] leading-snug">
+                <span className="block font-semibold text-cream">{CLINIC.accreditation.title}</span>
+                <span className="block text-cream/60">{CLINIC.accreditation.hygiene}</span>
+                <span className="mt-1 block font-mono text-[11px] text-cream/50">Reg. {CLINIC.establishmentReg}</span>
+              </span>
+            </div>
           </div>
         </div>
         <div className="border-t border-white/10">
           <div className="container-x flex flex-wrap justify-between gap-3 py-6 text-xs text-cream/50">
             <p>© {new Date().getFullYear()} DOCTOR'S CLINIC. All rights reserved.</p>
-            <p>Demo site: doctors, fees and contact details are placeholders.</p>
+            <p>Demo site: doctors, registration numbers, fees, contact details and accreditation are placeholders.</p>
           </div>
         </div>
       </footer>
     </div>
+    </ProfileProvider>
   );
 }

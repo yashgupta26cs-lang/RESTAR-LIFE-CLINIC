@@ -4,12 +4,11 @@ import { DOCTORS, SPECIALTIES, FACILITIES, IMAGES } from "../data.js";
 import { scrollToId } from "../router.js";
 import { Icon, Img } from "../components/ui.jsx";
 import DoctorCard from "../components/DoctorCard.jsx";
-import DoctorModal from "../components/DoctorModal.jsx";
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 function matches(d, q) {
   if (!q) return true;
-  const hay = norm([d.name, d.specialty, d.qual, ...d.conditions, ...d.languages].join(" "));
+  const hay = norm([d.name, d.specialty, d.qual, d.designation, ...d.conditions, ...d.languages].join(" "));
   const words = norm(q).split(" ").filter((w) => w && !["dr", "doctor", "for", "and", "the", "pain"].includes(w));
   if (!words.length) return hay.includes(norm(q));
   return words.every((w) => hay.includes(w) || hay.includes(w.replace(/s$/, "")));
@@ -19,7 +18,6 @@ export default function Explore({ params }) {
   const [q, setQ] = useState(params.q || "");
   const [spec, setSpec] = useState(params.spec || "All");
   const [sort, setSort] = useState("recommended");
-  const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState(params.tab === "facilities" ? "facilities" : "doctors");
 
   useEffect(() => { setQ(params.q || ""); setSpec(params.spec || "All"); }, [params.q, params.spec]);
@@ -52,7 +50,7 @@ export default function Explore({ params }) {
             <h1 className="font-display text-4xl font-extrabold leading-tight sm:text-5xl">Our doctors &amp; clinic facilities</h1>
             <p className="lead mt-4 max-w-xl">Find the right specialist by name, department or symptom, compare timings and fees, and see the diagnostics available on site.</p>
           </div>
-          <Img src={IMAGES.lobby} alt="Clinic interior" className="hidden h-48 rounded-xl border border-line lg:block" />
+          <Img src={IMAGES.lounge} alt="Patient waiting lounge with teal sofas" eager className="hidden h-48 rounded-xl border border-line lg:block" />
         </div>
       </section>
 
@@ -114,7 +112,7 @@ export default function Explore({ params }) {
 
         {list.length ? (
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((d) => <DoctorCard key={d.id} doctor={d} onProfile={setProfile} />)}
+            {list.map((d) => <DoctorCard key={d.id} doctor={d} />)}
           </div>
         ) : (
           <div className="mt-6 card flex flex-col items-center p-12 text-center">
@@ -134,9 +132,9 @@ export default function Explore({ params }) {
           <p className="lead mt-3 max-w-2xl">Everything most visits need, from blood tests to X-rays and medicines, is on site, so you don't have to travel between centres.</p>
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {FACILITIES.map((f) => (
-              <article key={f.title} className="card card-hover flex flex-col overflow-hidden">
+              <article key={f.title} className="card card-hover group flex flex-col overflow-hidden">
                 <div className="relative">
-                  <Img src={IMAGES[f.img]} alt={f.title} className="h-48" />
+                  <Img src={IMAGES[f.img]} alt={f.title} className="h-48" imgClass="transition-transform duration-500 ease-out group-hover:scale-[1.03]" />
                   <span className="absolute left-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 text-brand shadow-card"><Icon name={f.icon} size={20} /></span>
                   {f.hours === "Open 24/7" && <span className="absolute right-3 top-3 badge bg-coral text-white">24/7</span>}
                 </div>
@@ -157,7 +155,6 @@ export default function Explore({ params }) {
         </div>
       </section>
 
-      {profile && <DoctorModal doctor={profile} onClose={() => setProfile(null)} />}
     </>
   );
 }

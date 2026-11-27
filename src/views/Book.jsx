@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { User, Stethoscope, CalendarDays, Sun, Sunset, AlertCircle, Check, Printer, CalendarPlus, ShieldCheck, Lock, Clock, Ticket, Phone, ArrowLeft, Info } from "lucide-react";
-import { DOCTORS, SPECIALTIES, SYMPTOM_TAGS, CLINIC } from "../data.js";
+import { User, Stethoscope, CalendarDays, Sun, Sunset, AlertCircle, Check, Printer, CalendarPlus, ShieldCheck, Lock, Clock, Ticket, Phone, ArrowLeft, Info, BadgeCheck, Siren, MapPin } from "lucide-react";
+import { DOCTORS, SPECIALTIES, SYMPTOM_TAGS, CLINIC, SESSION_HOURS } from "../data.js";
 import { navigate, scrollToId } from "../router.js";
-import { DAY, inr, doctorById, todayISO, isoDate, parseISO, prettyDate, slotsFor, bookedSlots, slotMinutes, cleanPhone, createBooking, daysText } from "../lib.js";
-import { DoctorPhoto, SpecBadge } from "../components/ui.jsx";
+import { DAY, inr, doctorById, todayISO, isoDate, parseISO, prettyDate, slotsFor, bookedSlots, slotMinutes, cleanPhone, createBooking, daysText, nextAvailable } from "../lib.js";
+import { DoctorPhoto, SpecBadge, NextSlot } from "../components/ui.jsx";
+import { useProfile } from "../components/Profile.jsx";
 import Slip from "../components/Slip.jsx";
 
 const EMPTY = { name: "", age: "", gender: "", phone: "", symptoms: "" };
@@ -61,6 +62,7 @@ export default function Book({ params }) {
   const [booking, setBooking] = useState(null);
   const [tick, setTick] = useState(0);
   const formRef = useRef(null);
+  const openProfile = useProfile();
 
   const doctor = doctorById(doctorId);
   useEffect(() => { if (doctorById(params.doctor)) { setDoctorId(params.doctor); setFilter(doctorById(params.doctor).specialty); setSlot(""); } }, [params.doctor]);
@@ -81,10 +83,17 @@ export default function Book({ params }) {
 
   // pick doctor: keep date if they work then, else jump to their next working day
   const chooseDoctor = (id) => {
+    if (id === doctorId) return;
     setDoctorId(id); setSlot("");
     const d = doctorById(id);
     if (!d.days.includes(parseISO(date).getDay())) { const nd = nextDays.find((x) => d.days.includes(parseISO(x).getDay())); if (nd) setDate(nd); }
   };
+
+  // "View Full Info": the popup's CTA selects the doctor here instead of leaving the page, so the form keeps its progress.
+  const viewInfo = (d) => openProfile(d, {
+    selected: d.id === doctorId,
+    onBook: (doc) => { chooseDoctor(doc.id); setFilter((f) => (f === "All" || f === doc.specialty ? f : doc.specialty)); scrollToId("step-slot", 16); },
+  });
 
   const slotInfo = useMemo(() => {
     if (!doctor || !dayOk) return null;
@@ -152,7 +161,7 @@ export default function Book({ params }) {
         </div>
       </section>
 
-      <form ref={formRef} id="booking-form" onSubmit={submit} noValidate className="container-x grid items-start gap-8 py-10 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)]">
+      <form ref={formRef} id="booking-form" onSubmit={submit} noValidate className="container-x grid grid-cols-1 items-start gap-8 py-10 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)]">
         <div className="space-y-6">
           {touched && errCount > 0 && (
             <div className="flex items-start gap-3 rounded-xl border border-coral/40 bg-coral-soft px-5 py-4 text-[14px] text-coral-ink animate-fadeIn" role="alert">
@@ -226,18 +235,28 @@ export default function Book({ params }) {
               {visibleDocs.map((d) => {
                 const on = d.id === doctorId;
                 return (
-                  <button key={d.id} type="button" role="radio" aria-checked={on} onClick={() => chooseDoctor(d.id)}
-                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ease-out ${on ? "border-brand bg-brand-soft ring-2 ring-brand/20" : "border-line bg-white hover:border-brand/50 hover:bg-cream"}`}>
-                    <DoctorPhoto doctor={d} rounded="rounded-lg" className="h-14 w-14 shrink-0" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-display text-[15px] font-bold">{d.name}</span>
-                      <span className="block truncate text-[12.5px] text-slate">{d.specialty} · {daysText(d.days)}</span>
-                    </span>
-                    <span className="flex flex-col items-end gap-1">
-                      <span className="font-mono text-[14px] font-bold text-brand">{inr(d.fee)}</span>
-                      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-200 ${on ? "border-brand bg-brand text-cream" : "border-line"}`}>{on && <Check size={12} aria-hidden="true" />}</span>
-                    </span>
-                  </button>
+                  <div key={d.id} className={`flex flex-col overflow-hidden rounded-xl border transition-all duration-200 ease-out ${on ? "border-brand bg-brand-soft ring-2 ring-brand/20" : "border-line bg-white hover:border-brand/50"}`}>
+                    <button type="button" role="radio" aria-checked={on} onClick={() => chooseDoctor(d.id)}
+                      className={`flex items-center gap-3 p-3 text-left transition-colors duration-200 ${on ? "" : "hover:bg-cream"}`}>
+                      <DoctorPhoto doctor={d} rounded="rounded-lg" className="h-14 w-14 shrink-0" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-[15px] font-bold">{d.name}</span>
+                        <span className="block truncate text-[12.5px] text-slate">{d.specialty} · {daysText(d.days)}</span>
+                        <span className="block truncate font-mono text-[11px] text-slate">Reg. No: {d.regNo}</span>
+                      </span>
+                      <span className="flex flex-col items-end gap-1">
+                        <span className="font-mono text-[14px] font-bold text-brand">{inr(d.fee)}</span>
+                        <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-200 ${on ? "border-brand bg-brand text-cream" : "border-line"}`}>{on && <Check size={12} aria-hidden="true" />}</span>
+                      </span>
+                    </button>
+                    <div className={`flex items-center justify-between gap-2 border-t px-3 py-2 ${on ? "border-brand/15" : "border-line"}`}>
+                      <NextSlot next={nextAvailable(d)} className="min-w-0 truncate !px-2 !py-0.5 text-[11px]" />
+                      <button type="button" onClick={() => viewInfo(d)} aria-label={`View full info for ${d.name}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[12.5px] font-semibold text-brand transition-colors duration-200 hover:bg-white hover:underline">
+                        <Info size={14} aria-hidden="true" /> View Full Info
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -280,7 +299,7 @@ export default function Book({ params }) {
               )}
               {slotInfo && (
                 <div className="space-y-6">
-                  {[["morning", "Morning Slots", "09:00 AM – 12:00 PM", Sun], ["evening", "Evening Slots", "04:00 PM – 07:30 PM", Sunset]].map(([key, label, range, I]) => (
+                  {[["morning", "Morning Slots", SESSION_HOURS.morning, Sun], ["evening", "Evening Slots", SESSION_HOURS.evening, Sunset]].map(([key, label, range, I]) => (
                     <div key={key}>
                       <p className="mb-3 flex items-center gap-2 font-display text-[14.5px] font-bold">
                         <I size={17} className={key === "morning" ? "text-coral" : "text-brand"} aria-hidden="true" /> {label}
@@ -338,12 +357,21 @@ export default function Book({ params }) {
             </div>
             <div className="p-5">
               {doctor ? (
-                <div className="flex items-center gap-3 animate-fadeIn" key={doctor.id}>
-                  <DoctorPhoto doctor={doctor} rounded="rounded-lg" className="h-16 w-16 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="truncate font-display font-bold">{doctor.name}</p>
-                    <p className="truncate text-[12.5px] text-slate">{doctor.qual}</p>
-                    <div className="mt-1"><SpecBadge>{doctor.specialty}</SpecBadge></div>
+                <div className="animate-fadeIn" key={doctor.id}>
+                  <div className="flex items-start gap-3">
+                    <DoctorPhoto doctor={doctor} rounded="rounded-lg" className="h-[84px] w-[70px] shrink-0 border border-line" />
+                    <div className="min-w-0">
+                      <p className="font-display font-bold leading-tight">{doctor.name}</p>
+                      <p className="mt-0.5 text-[12.5px] leading-snug text-ink/75">{doctor.qual}</p>
+                      <p className="mt-1 inline-flex items-center gap-1 font-mono text-[11px] text-slate"><BadgeCheck size={12} className="text-mint-ink" aria-hidden="true" />Reg. No: {doctor.regNo}</p>
+                      <div className="mt-1.5"><SpecBadge>{doctor.specialty}</SpecBadge></div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-line bg-cream px-3 py-2">
+                    <span className="flex min-w-0 items-center gap-1.5 truncate text-[12px] text-slate"><MapPin size={13} className="shrink-0 text-brand" aria-hidden="true" /><span className="truncate">{doctor.room}</span></span>
+                    <button type="button" onClick={() => viewInfo(doctor)} className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-brand hover:underline">
+                      <Info size={14} aria-hidden="true" /> View Full Info
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -369,11 +397,21 @@ export default function Book({ params }) {
                 </div>
               </dl>
 
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-cream px-4 py-3">
-                <span className="text-[13.5px] font-semibold">Consultation fee</span>
-                <span className="font-mono text-xl font-bold text-brand">{doctor ? inr(doctor.fee) : "₹—"}</span>
+              <div className="mt-2 overflow-hidden rounded-lg border border-line">
+                <div className="flex items-center justify-between px-4 py-2 text-[13px]">
+                  <span className="text-slate">Consultation fee</span>
+                  <span className="font-mono font-semibold">{doctor ? inr(doctor.fee) : "₹—"}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-line px-4 py-2 text-[13px]">
+                  <span className="text-slate">Online booking charge</span>
+                  <span className="font-mono font-semibold">{inr(0)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-line bg-cream px-4 py-3">
+                  <span className="text-[13.5px] font-semibold">Payable at reception</span>
+                  <span className="font-mono text-xl font-bold text-brand">{doctor ? inr(doctor.fee) : "₹—"}</span>
+                </div>
               </div>
-              <p className="mt-2 flex items-center gap-1.5 text-[12px] text-slate"><Lock size={12} aria-hidden="true" /> Pay at clinic. No online payment needed.</p>
+              <p className="mt-2 flex items-center gap-1.5 text-[12px] text-slate"><Lock size={12} aria-hidden="true" /> Pay at reception by cash, UPI or card. No online payment needed.</p>
 
               <button type="submit" className="btn-primary mt-5 hidden w-full min-h-[54px] lg:inline-flex"><Ticket size={19} aria-hidden="true" /> Confirm Appointment &amp; Generate Token</button>
             </div>
@@ -381,7 +419,9 @@ export default function Book({ params }) {
           <div className="mt-4 space-y-2 rounded-xl border border-line bg-white/60 p-4 text-[13px] text-slate">
             <p className="flex items-center gap-2"><ShieldCheck size={15} className="text-mint" aria-hidden="true" /> Your details stay on this device.</p>
             <p className="flex items-center gap-2"><Clock size={15} className="text-mint" aria-hidden="true" /> Arrive 15 minutes before your slot.</p>
-            <p className="flex items-center gap-2"><Phone size={15} className="text-mint" aria-hidden="true" /> Help: <a href={CLINIC.phoneHref} className="font-mono text-ink hover:underline">{CLINIC.phone}</a></p>
+            <p className="flex items-center gap-2"><Phone size={15} className="text-mint" aria-hidden="true" /> Reception: <a href={CLINIC.phoneHref} className="font-mono text-ink hover:underline">{CLINIC.phone}</a></p>
+            <p className="flex items-center gap-2"><Siren size={15} className="text-coral" aria-hidden="true" /> 24/7 Emergency: <a href={CLINIC.emergencyHref} className="font-mono text-ink hover:underline">{CLINIC.emergency}</a></p>
+            <p className="flex items-start gap-2 border-t border-line pt-2"><BadgeCheck size={15} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" /><span><span className="font-semibold text-ink">{CLINIC.accreditation.title}</span><span className="block text-[12px]">{CLINIC.accreditation.hygiene}</span></span></p>
           </div>
         </aside>
       </form>

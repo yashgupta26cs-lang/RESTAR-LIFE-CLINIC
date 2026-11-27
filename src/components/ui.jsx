@@ -67,4 +67,18 @@ export function SectionHead({ eyebrow, title, lead, align = "left", action }) {
   );
 }
 
+/** "Next Available Today · 04:30 PM" (or the next day with an open slot). `overlay` adds a solid background for use on photos. */
+export function NextSlot({ next, overlay = false, className = "" }) {
+  if (!next) return <span className={`badge ${overlay ? "bg-white/95 shadow-card" : "bg-sand"} text-slate ${className}`}>Fully booked for 3 weeks</span>;
+  const today = next.label === "Today";
+  const bg = overlay ? "bg-white/95 shadow-card" : today ? "bg-mint-soft" : "border border-line bg-white";
+  return (
+    <span className={`badge ${bg} ${today ? "text-mint-ink" : "text-slate"} ${className}`}>
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${today ? "bg-mint" : "bg-slate/40"}`} aria-hidden="true" />
+      <span>{today ? "Next Available Today" : `Next: ${next.label}`}</span>
+      <span className="font-mono font-medium">· {next.slot}</span>
+    </span>
+  );
+}
+
 export const docSchedule = (d) => ({ days: daysText(d.days), hours: hoursText(d) });

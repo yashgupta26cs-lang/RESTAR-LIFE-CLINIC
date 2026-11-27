@@ -1,7 +1,7 @@
-import { DOCTORS, MORNING, EVENING } from "./data.js";
+import { DOCTORS, MORNING, EVENING, SESSION_HOURS } from "./data.js";
 
 export const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export const inr = (n) => "₹" + Number(n).toLocaleString("en-IN");
 export const doctorById = (id) => DOCTORS.find((d) => d.id === id) || null;
@@ -22,7 +22,28 @@ export function daysText(days) {
   return contiguous && s.length > 2 ? `${DAY_SHORT[s[0]]} – ${DAY_SHORT[s[s.length - 1]]}` : s.map((d) => DAY_SHORT[d]).join(", ");
 }
 export function hoursText(d) {
-  return d.sessions.map((x) => (x === "morning" ? "09:00 AM – 12:00 PM" : "04:00 PM – 07:30 PM")).join(" · ");
+  return d.sessions.map((x) => SESSION_HOURS[x]).join(" · ");
+}
+/** Mon → Sun rows: { day, short, morning, evening } with the hours string or null when there is no OPD. */
+export function weeklySchedule(d) {
+  return [1, 2, 3, 4, 5, 6, 0].map((i) => {
+    const on = d.days.includes(i);
+    return { i, day: DAY[i], short: DAY_SHORT[i],
+      morning: on && d.sessions.includes("morning") ? SESSION_HOURS.morning : null,
+      evening: on && d.sessions.includes("evening") ? SESSION_HOURS.evening : null };
+  });
+}
+
+/* ---------------- Slip metadata (derived, so it is stable on re-print) ---------------- */
+const tokenNum = (t) => String(t).replace(/\D/g, "").padStart(6, "0");
+/** Receipt number: OPD/RCPT/2026/000101 */
+export const receiptNo = (b) => `OPD/RCPT/${new Date(b.createdAt).getFullYear()}/${tokenNum(b.token)}`;
+/** Patient ID (UHID) derived from the phone number, so repeat visits share one ID. */
+export const patientId = (b) => { let h = 11; for (const c of cleanPhone(b.phone)) h = (h * 33 + c.charCodeAt(0)) % 1000000; return `DC-UH-${String(h).padStart(6, "0")}`; };
+/** Reporting time: 15 minutes before the slot. */
+export function reportingTime(slot) {
+  const m = slotMinutes(slot) - 15, h = Math.floor(m / 60), mm = m % 60;
+  return `${pad(((h + 11) % 12) + 1)}:${pad(mm)} ${h >= 12 ? "PM" : "AM"}`;
 }
 export function slotsFor(d) {
   return { morning: d.sessions.includes("morning") ? MORNING : [], evening: d.sessions.includes("evening") ? EVENING : [] };
