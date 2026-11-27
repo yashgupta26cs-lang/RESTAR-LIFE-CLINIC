@@ -1,61 +1,70 @@
 import React, { useState } from "react";
-import {
-  Stethoscope, HeartPulse, Bone, ScanFace, Baby, Brain, FlaskConical, ScanLine, Pill, DoorOpen, Siren, ClipboardCheck,
-} from "lucide-react";
-import { initials, inr, daysText, hoursText } from "../lib.js";
+import { Stethoscope, HeartPulse, Bone, ScanFace, Baby, Brain, FlaskConical, ScanLine, Pill, DoorOpen, Siren, ClipboardCheck, Circle, Star } from "lucide-react";
 
-export const ICONS = { Stethoscope, HeartPulse, Bone, ScanFace, Baby, Brain, FlaskConical, ScanLine, Pill, DoorOpen, Siren, ClipboardCheck };
+const ICONS = { Stethoscope, HeartPulse, Bone, ScanFace, Baby, Brain, FlaskConical, ScanLine, Pill, DoorOpen, Siren, ClipboardCheck };
+import { initials, daysText, hoursText } from "../lib.js";
 
-/** Grayscale photo on a #EAEAEA box. A failed image hides itself: never a broken-image icon. */
-export function Photo({ src, alt, className = "", imgClassName = "", eager = false }) {
-  const [broken, setBroken] = useState(false);
+export function Icon({ name, ...props }) {
+  const C = ICONS[name] || Circle;
+  return <C aria-hidden="true" {...props} />;
+}
+
+/** Image with a branded fallback, so a failed load never shows a broken image. */
+export function Img({ src, alt, className = "", fallback, eager = false, imgClass = "" }) {
+  const [failed, setFailed] = useState(!src);
   return (
     <div className={`media ${className}`}>
-      {!broken && (
-        <img src={src} alt={alt} loading={eager ? "eager" : "lazy"} fetchpriority={eager ? "high" : undefined} onError={() => setBroken(true)} className={`img-mono absolute inset-0 ${imgClassName}`} />
+      {failed ? (
+        fallback || (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-soft via-sand to-[#EADFCF]" role="img" aria-label={alt}>
+            <HeartPulse className="h-10 w-10 text-brand/40" aria-hidden="true" />
+          </div>
+        )
+      ) : (
+        <img src={src} alt={alt} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setFailed(true)}
+          className={`absolute inset-0 h-full w-full object-cover ${imgClass}`} />
       )}
-      {broken && <span className="sr-only">{alt}</span>}
     </div>
   );
 }
 
-export function Eyebrow({ children, className = "", inverse = false }) {
-  return <p className={`text-xs font-semibold uppercase tracking-widest mb-4 ${inverse ? "text-neutral-400" : "text-muted"} ${className}`}>{children}</p>;
+const TONES = ["from-brand to-[#1F7A6D]", "from-[#1F7A6D] to-mint-ink", "from-coral-ink to-coral", "from-[#2E5B57] to-brand"];
+
+export function DoctorPhoto({ doctor: d, className = "", eager = false, rounded = "rounded-xl", initialsClass }) {
+  const tone = TONES[d.name.length % TONES.length];
+  return (
+    <Img src={d.photo} alt={`Portrait of ${d.name}`} eager={eager} className={`${rounded} ${className}`} imgClass="object-top"
+      fallback={
+        <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${tone}`} role="img" aria-label={d.name}>
+          <span className={`font-display font-bold text-cream/95 ${initialsClass || (/h-1[0-6]|w-1[0-6]/.test(className) ? "text-lg" : "text-3xl")}`}>{initials(d.name)}</span>
+        </div>
+      } />
+  );
 }
 
-export function Badge({ children, inverse = false }) {
+export function SpecBadge({ children }) {
+  return <span className="badge-brand">{children}</span>;
+}
+
+export function Stars({ n = 5 }) {
   return (
-    <span className={`inline-block border px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest leading-5 ${inverse ? "border-white text-white" : "border-ink bg-white text-ink"}`}>
-      {children}
+    <span className="inline-flex gap-0.5" aria-label={`${n} out of 5 stars`}>
+      {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={15} className={i < n ? "fill-coral text-coral" : "text-line"} aria-hidden="true" />)}
     </span>
   );
 }
 
-export function Monogram({ name, size = "h-14 w-14 text-lg" }) {
-  return <span aria-hidden="true" className={`flex shrink-0 items-center justify-center bg-ink font-bold tracking-wider text-white ${size}`}>{initials(name)}</span>;
-}
-
-export function SectionHead({ eyebrow, title, children, className = "" }) {
+export function SectionHead({ eyebrow, title, lead, align = "left", action }) {
   return (
-    <div className={`mb-12 max-w-3xl ${className}`}>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">{title}</h2>
-      {children && <p className="mt-4 text-lg text-muted">{children}</p>}
-    </div>
-  );
-}
-
-export function PageHead({ eyebrow, title, children }) {
-  return (
-    <div className="border-b border-line no-print">
-      <div className="container-x py-14 md:py-20">
-        <Eyebrow>{eyebrow}</Eyebrow>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">{title}</h1>
-        {children && <p className="mt-4 max-w-2xl text-lg text-muted">{children}</p>}
+    <div className={`flex flex-wrap items-end justify-between gap-6 mb-10 ${align === "center" ? "text-center justify-center" : ""}`}>
+      <div className={align === "center" ? "mx-auto max-w-2xl" : "max-w-2xl"}>
+        {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
+        <h2 className="h2">{title}</h2>
+        {lead && <p className="lead mt-4">{lead}</p>}
       </div>
+      {action}
     </div>
   );
 }
 
-export const docSchedule = (d) => `${daysText(d.days)} · ${hoursText(d)}`;
-export { inr };
+export const docSchedule = (d) => ({ days: daysText(d.days), hours: hoursText(d) });

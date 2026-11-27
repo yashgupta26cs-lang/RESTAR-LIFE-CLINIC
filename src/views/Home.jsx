@@ -1,181 +1,340 @@
 import React, { useMemo, useState } from "react";
-import { ArrowRight, Search, CalendarClock } from "lucide-react";
-import { DOCTORS, SPECIALTIES, IMAGES } from "../data.js";
+import { Search, ArrowRight, CalendarPlus, Compass, ShieldCheck, Users, Building2, Timer, Ticket, CheckCircle2, Stethoscope, ClipboardList, FileCheck2, Quote, Sparkles, HeartPulse } from "lucide-react";
+import { DOCTORS, SPECIALTIES, IMAGES, LOCAL, TESTIMONIALS, CLINIC } from "../data.js";
 import { navigate } from "../router.js";
-import { inr, nextAvailable } from "../lib.js";
-import { Photo, Eyebrow, Badge, Monogram, SectionHead, ICONS } from "../components/ui.jsx";
+import { nextAvailable, doctorById } from "../lib.js";
+import { Icon, Img, SectionHead, Stars, DoctorPhoto } from "../components/ui.jsx";
+import DoctorCard from "../components/DoctorCard.jsx";
 
-export default function Home() {
+function clinicStatus(now = new Date()) {
+  const day = now.getDay(), m = now.getHours() * 60 + now.getMinutes();
+  const open = day !== 0 && m >= 480 && m < 1200;
+  return { open, label: open ? "Open Now" : day === 0 ? "Closed Today" : "Closed Now", sub: open ? "Closes at 8:00 PM" : "Opens 8:00 AM, Mon – Sat" };
+}
+
+function Hero() {
   const [q, setQ] = useState("");
-  const featured = DOCTORS.filter((d) => d.featured);
-  const next = useMemo(() => Object.fromEntries(featured.map((d) => [d.id, nextAvailable(d)])), []); // eslint-disable-line
-
-  const submit = (e) => { e.preventDefault(); navigate("explore", { q: q.trim() }); };
+  const status = clinicStatus();
+  const soonest = useMemo(() => {
+    let best = null;
+    DOCTORS.forEach((d) => { const n = nextAvailable(d); if (n && (!best || n.date + n.slot < best.n.date + best.n.slot)) best = { d, n }; });
+    return best;
+  }, []);
+  const featured = doctorById("meera-joshi");
+  const quick = ["Fever", "Chest pain", "Back pain", "Skin rash", "Migraine"];
+  const go = (e) => { e.preventDefault(); navigate("explore", { q: q.trim(), tab: "doctors" }); };
 
   return (
-    <>
-      {/* 1. Asymmetric editorial hero */}
-      <section className="border-b border-line">
-        <div className="container-x grid lg:grid-cols-12 gap-12 lg:gap-16 py-16 lg:py-24">
-          <div className="lg:col-span-6 flex flex-col justify-center min-w-0">
-            <Eyebrow>Multispecialty Outpatient Clinic</Eyebrow>
-            <h1 className="text-[36px] sm:text-[52px] lg:text-[60px] font-extrabold break-words leading-[1.02] tracking-[-0.03em]">
-              Senior specialists.<br />Same-day diagnostics.<br />Zero queues.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
-              Eight consultants, an automated lab and a 24/7 pharmacy under one roof. Book a fixed OPD slot
-              online and walk in with your digital token.
-            </p>
+    <section className="relative overflow-hidden">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-mint/10 blur-3xl" />
+      <div className="container-x grid items-center gap-12 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-20">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-brand-soft px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em] text-brand">
+            <ShieldCheck size={14} aria-hidden="true" /> Trusted Multispecialty Care
+          </span>
+          <h1 className="mt-6 font-display text-[40px] font-extrabold leading-[1.06] text-ink sm:text-[54px] lg:text-[60px]">
+            Unhurried care from doctors <span className="text-brand">who know you</span><span className="text-coral">.</span>
+          </h1>
+          <p className="lead mt-5 max-w-xl">
+            Eight senior specialists, same-day diagnostics and a 24/7 pharmacy under one warm, calm roof. Book a slot in a minute and walk in with your digital OPD token.
+          </p>
 
-            <form onSubmit={submit} role="search" className="mt-10 flex border border-ink">
-              <label htmlFor="home-search" className="sr-only">Search doctors, specialties, or symptoms</label>
-              <span className="flex items-center pl-4 text-ink" aria-hidden="true"><Search size={20} strokeWidth={1.75} /></span>
-              <input
-                id="home-search" type="search" value={q} onChange={(e) => setQ(e.target.value)}
-                placeholder="Search doctors, specialties, or symptoms..."
-                className="min-w-0 flex-1 bg-white px-4 py-4 text-base outline-none placeholder:text-neutral-400"
-              />
-              <button type="submit" className="bg-ink px-6 text-[15px] font-semibold text-white hover:bg-neutral-800">Search</button>
-            </form>
-            <p className="mt-3 text-sm text-muted">
-              Try{" "}
-              {["Chest pain", "Skin rash", "Migraine", "Dr. Rao"].map((t, i) => (
-                <React.Fragment key={t}>
-                  {i > 0 && ", "}
-                  <button type="button" onClick={() => navigate("explore", { q: t })} className="font-semibold text-ink underline underline-offset-4">{t}</button>
-                </React.Fragment>
-              ))}
-            </p>
-
-            <div className="mt-10 flex flex-wrap gap-3">
-              <button type="button" onClick={() => navigate("book")} className="btn-primary">Take Appointment <ArrowRight size={18} aria-hidden="true" /></button>
-              <button type="button" onClick={() => navigate("explore")} className="btn-secondary">Overview / Explore</button>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 relative min-h-[380px] lg:min-h-[620px]">
-            <Photo src={IMAGES.hero} alt="Modern hospital lobby with reception counter" className="absolute inset-0" eager />
-            <div className="absolute bottom-0 left-0 max-w-[82%] bg-ink p-6 text-white">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400">Main Lobby · Ground Floor</p>
-              <p className="mt-2 text-lg font-semibold leading-snug">Open Mon – Sat, 08:00 AM to 08:00 PM. Lab and emergency open 24/7.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Metrics strip */}
-      <section className="container-x py-16">
-        <dl className="grid grid-cols-2 lg:grid-cols-4 border-l border-t border-line">
-          {[
-            ["08+", "Senior Specialists"],
-            ["12+", "Diagnostic Facilities"],
-            ["15 Min", "Avg. OPD Wait"],
-            ["100%", "Instant Digital Token"],
-          ].map(([n, l]) => (
-            <div key={l} className="border-r border-b border-line p-6 md:p-8">
-              <dt className="sr-only">{l}</dt>
-              <dd className="font-mono text-3xl md:text-[40px] font-semibold tracking-tight leading-none">{n}</dd>
-              <dd className="mt-3 text-xs font-semibold uppercase tracking-widest text-muted">{l}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* 3. Specialties matrix */}
-      <section className="bg-surface py-16 md:py-24">
-        <div className="container-x">
-          <SectionHead eyebrow="Clinical Specialties" title="Six departments. One reception desk.">
-            Choose a department to see its doctors, timings and fees.
-          </SectionHead>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-l border-t border-line bg-white">
-            {SPECIALTIES.map((s, i) => {
-              const Icon = ICONS[s.icon];
-              const count = DOCTORS.filter((d) => d.specialty === s.key).length;
-              return (
-                <button
-                  key={s.key} type="button" onClick={() => navigate("explore", { spec: s.key })}
-                  className="group flex flex-col items-start gap-5 border-r border-b border-line p-8 text-left hover:bg-ink hover:text-white"
-                >
-                  <div className="flex w-full items-start justify-between">
-                    <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
-                    <span className="font-mono text-sm text-muted group-hover:text-neutral-400">{String(i + 1).padStart(2, "0")}</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold tracking-tight">{s.key}</h3>
-                    <p className="mt-2 text-[15px] text-muted group-hover:text-neutral-300">{s.blurb}</p>
-                  </div>
-                  <span className="mt-auto inline-flex items-center gap-2 text-sm font-semibold">
-                    {count} {count === 1 ? "doctor" : "doctors"} <ArrowRight size={16} aria-hidden="true" />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Featured doctors */}
-      <section className="py-16 md:py-24">
-        <div className="container-x">
-          <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-            <SectionHead eyebrow="Featured Specialists" title="Meet some of our senior consultants." className="mb-0" />
-            <a href="#/explore" className="inline-flex items-center gap-2 border-b border-ink pb-1 text-[15px] font-semibold">View All Doctors <ArrowRight size={16} aria-hidden="true" /></a>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {featured.map((d) => {
-              const n = next[d.id];
-              return (
-                <article key={d.id} className="flex flex-col border border-line">
-                  <div className="flex items-start gap-4 border-b border-line bg-surface p-6">
-                    <Monogram name={d.name} />
-                    <div>
-                      <Badge>{d.specialty}</Badge>
-                      <h3 className="mt-2 text-xl font-bold tracking-tight">{d.name}</h3>
-                      <p className="text-sm text-muted">{d.qual}</p>
-                    </div>
-                  </div>
-                  <dl className="px-6 text-sm">
-                    <div className="flex justify-between gap-4 border-b border-line py-3.5"><dt className="text-muted">Experience</dt><dd className="font-medium">{d.exp} years</dd></div>
-                    <div className="flex justify-between gap-4 border-b border-line py-3.5">
-                      <dt className="text-muted inline-flex items-center gap-1.5"><CalendarClock size={15} aria-hidden="true" /> Next available</dt>
-                      <dd className="font-mono font-semibold">{n ? `${n.label}, ${n.slot}` : "Fully booked"}</dd>
-                    </div>
-                    <div className="flex items-baseline justify-between gap-4 py-3.5"><dt className="text-muted">Consultation fee</dt><dd className="font-mono text-2xl font-semibold">{inr(d.fee)}</dd></div>
-                  </dl>
-                  <div className="mt-auto p-6 pt-2">
-                    <button type="button" onClick={() => navigate("book", { doctor: d.id, date: n?.date })} className="btn-primary w-full">Book Now</button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. How it works */}
-      <section className="bg-surface py-16 md:py-24 border-t border-line">
-        <div className="container-x">
-          <SectionHead eyebrow="How It Works" title="From booking to consultation in three steps." />
-          <ol className="grid md:grid-cols-3 border-l border-t border-ink bg-white">
-            {[
-              ["01", "Select Specialist & Slot", "Pick a doctor and a fixed time slot that suits you. Booked slots are greyed out."],
-              ["02", "Enter Patient Details", "Name, age, phone and symptoms, so your doctor is prepared before you arrive."],
-              ["03", "Download / Print OPD Token Sheet", "Get your token number instantly. Print it, save it as a PDF or find it later."],
-            ].map(([n, t, d], i) => (
-              <li key={n} className="relative border-r border-b border-ink p-8 md:p-10">
-                <span className="font-mono text-5xl font-semibold leading-none">{n}</span>
-                <h3 className="mt-8 text-xl font-bold tracking-tight">{t}</h3>
-                <p className="mt-3 text-[15px] text-muted">{d}</p>
-                {i < 2 && <ArrowRight className="absolute right-8 top-10 hidden md:block" size={24} strokeWidth={1.5} aria-hidden="true" />}
-              </li>
+          <form onSubmit={go} role="search" className="mt-8 flex max-w-xl items-center gap-2 rounded-xl border border-line bg-white p-2 shadow-card transition-all duration-200 ease-out focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10">
+            <Search size={20} className="ml-2 shrink-0 text-slate" aria-hidden="true" />
+            <label htmlFor="hero-search" className="sr-only">Search doctors, specialties, or symptoms</label>
+            <input id="hero-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search doctors, specialties, or symptoms..."
+              className="min-w-0 flex-1 bg-transparent px-1 py-2.5 text-[15px] outline-none placeholder:text-[#9AA39F]" />
+            <button type="submit" className="btn-primary min-h-[42px] px-4">Search</button>
+          </form>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-slate">
+            <span>Popular:</span>
+            {quick.map((t) => (
+              <button key={t} type="button" onClick={() => navigate("explore", { q: t, tab: "doctors" })} className="rounded-full border border-line bg-white px-3 py-1 transition-all duration-200 hover:border-brand hover:text-brand">{t}</button>
             ))}
-          </ol>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <button type="button" onClick={() => navigate("book")} className="btn-primary">Take Appointment</button>
-            <button type="button" onClick={() => navigate("token")} className="btn-secondary">Find My Token</button>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button type="button" className="btn-primary px-6" onClick={() => navigate("book")}><CalendarPlus size={18} aria-hidden="true" /> Take Appointment</button>
+            <button type="button" className="btn-secondary px-6" onClick={() => navigate("explore")}><Compass size={18} aria-hidden="true" /> Explore Clinic &amp; Doctors</button>
+          </div>
+
+          <div className="mt-9 flex items-center gap-4">
+            <div className="flex -space-x-3">
+              {["arjun-mehta", "priya-nair", "vikram-rao", "kavya-iyer"].map((id) => (
+                <DoctorPhoto key={id} doctor={doctorById(id)} rounded="rounded-full" className="h-10 w-10 border-2 border-cream" initialsClass="text-[12px]" />
+              ))}
+            </div>
+            <p className="text-[13.5px] text-slate"><Stars /> <span className="ml-1 font-semibold text-ink">4.9</span> from 3,200+ patient reviews</p>
           </div>
         </div>
-      </section>
+
+        {/* Showcase */}
+        <div className="relative mx-auto w-full max-w-[540px]">
+          <figure className="relative">
+            <Img src={IMAGES.hero} alt="Detailed 3D model of the human heart, representing the clinic's cardiac care" eager className="aspect-[4/5] rounded-2xl border border-line shadow-float" />
+            <figcaption className="absolute bottom-4 left-4 hidden sm:flex items-center gap-3 rounded-lg bg-ink/60 px-4 py-2.5 text-[12.5px] text-cream">
+              <span className="flex items-center gap-2"><HeartPulse size={15} className="text-coral" aria-hidden="true" /> Advanced Cardiac Care Unit</span>
+              <span className="font-mono text-cream/80">Wing B</span>
+            </figcaption>
+          </figure>
+
+          {/* Live status card */}
+          <div className="absolute -left-4 top-8 w-[250px] rounded-xl border border-line bg-white p-4 shadow-float sm:-left-10">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                {status.open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-50" />}
+                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${status.open ? "bg-mint" : "bg-coral"}`} />
+              </span>
+              <p className="font-display text-[14px] font-bold">{status.label}</p>
+            </div>
+            <p className="mt-0.5 pl-[18px] text-[12px] text-slate">{status.sub}</p>
+            {soonest && (
+              <div className="mt-3 rounded-lg bg-cream p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate">Next available slot</p>
+                <p className="mt-1 font-mono text-[15px] font-bold text-brand">{soonest.n.label}, {soonest.n.slot}</p>
+                <p className="text-[12.5px] text-slate">{soonest.d.name} · {soonest.d.specialty}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Specialist card (portrait from the supplied reference image) */}
+          {featured && (
+            <button type="button" onClick={() => navigate("book", { doctor: featured.id })}
+              className="absolute -bottom-6 -right-2 flex w-[260px] items-center gap-3 rounded-xl border border-line bg-white p-3 text-left shadow-float transition-all duration-200 ease-out hover:-translate-y-0.5 sm:-right-8">
+              <DoctorPhoto doctor={featured} rounded="rounded-lg" className="h-16 w-16 shrink-0" initialsClass="text-lg" />
+              <span className="min-w-0">
+                <span className="block font-display text-[14px] font-bold">{featured.name}</span>
+                <span className="block text-[12px] text-slate">{featured.specialty} · {featured.exp}+ yrs</span>
+                <span className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-brand">Book a slot <ArrowRight size={13} aria-hidden="true" /></span>
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Metrics() {
+  const items = [
+    { icon: Users, value: "08+", label: "Senior Specialists", note: "MD / DM qualified" },
+    { icon: Building2, value: "10+", label: "Modern Facilities", note: "Lab, imaging, pharmacy" },
+    { icon: Timer, value: "15 Min", label: "Avg. Wait Time", note: "With a booked slot" },
+    { icon: Ticket, value: "Instant", label: "Digital OPD Token", note: "Printable slip in seconds" },
+  ];
+  return (
+    <section aria-label="Clinic highlights" className="container-x pb-6 pt-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map(({ icon: I, value, label, note }) => (
+          <div key={label} className="card flex items-center gap-4 p-5">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand"><I size={22} aria-hidden="true" /></span>
+            <div>
+              <p className="font-display text-2xl font-extrabold text-ink">{value}</p>
+              <p className="text-[14px] font-semibold text-ink">{label}</p>
+              <p className="text-[12.5px] text-slate">{note}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Specialties() {
+  return (
+    <section className="section">
+      <div className="container-x">
+        <SectionHead eyebrow="Departments" title="Six specialties, one front desk" lead="Pick a department to see its doctors, timings and fees. Not sure who to see? Start with General Medicine."
+          action={<button type="button" className="btn-ghost" onClick={() => navigate("explore")}>All doctors <ArrowRight size={16} aria-hidden="true" /></button>} />
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {SPECIALTIES.map((s, i) => {
+            const count = DOCTORS.filter((d) => d.specialty === s.key).length;
+            return (
+              <button key={s.key} type="button" onClick={() => navigate("explore", { spec: s.key, tab: "doctors" })}
+                className="card card-hover group flex items-start gap-4 p-6 text-left">
+                <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ease-out group-hover:bg-brand group-hover:text-cream ${i % 3 === 1 ? "bg-coral-soft text-coral-ink" : "bg-mint-soft text-mint-ink"}`}>
+                  <Icon name={s.icon} size={24} />
+                </span>
+                <span className="flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-display text-lg font-bold">{s.key}</span>
+                    <ArrowRight size={18} className="text-slate transition-all duration-200 ease-out group-hover:translate-x-1 group-hover:text-brand" aria-hidden="true" />
+                  </span>
+                  <span className="mt-1.5 block text-[14.5px] leading-relaxed text-slate">{s.blurb}</span>
+                  <span className="mt-3 inline-block text-[12.5px] font-semibold text-brand">{count} {count === 1 ? "specialist" : "specialists"}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturedDoctors() {
+  const list = DOCTORS.filter((d) => d.featured).slice(0, 3);
+  return (
+    <section className="section bg-sand">
+      <div className="container-x">
+        <SectionHead eyebrow="Featured specialists" title="Meet some of our senior doctors" lead="Every consultant sees patients personally. No juniors standing in, no rushed five-minute visits."
+          action={<button type="button" className="btn-secondary" onClick={() => navigate("explore", { tab: "doctors" })}>View all 8 doctors <ArrowRight size={16} aria-hidden="true" /></button>} />
+        <div className="grid gap-6 md:grid-cols-3">
+          {list.map((d) => <DoctorCard key={d.id} doctor={d} compact />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Showcase() {
+  const tiles = [
+    { src: IMAGES.hero, alt: "3D heart model in the cardiac care unit", cap: "Advanced cardiac care", sub: "ECG, echo referrals and heart-health checks", cls: "md:col-span-2 md:row-span-2 min-h-[320px]" },
+    { src: IMAGES.lobby, alt: "Bright, clean clinic corridor", cap: "Calm, hygienic spaces", sub: "Hospital-grade cleaning every 2 hours", cls: "min-h-[200px]" },
+    { src: IMAGES.lab, alt: "Automated pathology lab", cap: "Automated pathology", sub: "Same-day reports", cls: "min-h-[200px]" },
+    { src: IMAGES.pharmacy, alt: "In-house pharmacy shelves", cap: "24/7 pharmacy", sub: "Ground floor lobby", cls: "min-h-[200px]" },
+    { src: IMAGES.suites, alt: "Private consultation suite", cap: "Private consult suites", sub: "Sound-insulated rooms", cls: "min-h-[200px]" },
+  ];
+  return (
+    <section className="section">
+      <div className="container-x">
+        <SectionHead eyebrow="Inside the clinic" title="Built for comfort, hygiene and fast diagnostics"
+          action={<button type="button" className="btn-ghost" onClick={() => navigate("explore", { tab: "facilities" })}>All facilities <ArrowRight size={16} aria-hidden="true" /></button>} />
+        <div className="grid auto-rows-[200px] gap-4 md:grid-cols-4">
+          {tiles.map((t) => (
+            <figure key={t.cap} className={`group relative overflow-hidden rounded-xl border border-line ${t.cls}`}>
+              <Img src={t.src} alt={t.alt} className="absolute inset-0" imgClass="transition-transform duration-500 ease-out group-hover:scale-[1.03]" />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/75 via-ink/30 to-transparent p-4 pt-12 text-cream">
+                <p className="font-display text-[15px] font-bold">{t.cap}</p>
+                <p className="text-[12.5px] text-cream/80">{t.sub}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function About() {
+  const points = ["Consultants with 9 to 21 years of experience", "Lab, X-ray, ECG and pharmacy in the same building", "Transparent fees, shown before you book", "Digital OPD tokens: no queue at the front desk"];
+  const meera = doctorById("meera-joshi");
+  return (
+    <section className="section bg-white border-y border-line">
+      <div className="container-x grid items-center gap-14 lg:grid-cols-2">
+        <div className="relative">
+          <Img src={IMAGES.corridor} alt="Clinic consultation area" className="aspect-[5/4] rounded-2xl border border-line" />
+          <figure className="absolute -bottom-8 right-4 w-44 rounded-xl border border-line bg-white p-2 shadow-float sm:right-8">
+            <DoctorPhoto doctor={meera} rounded="rounded-lg" className="aspect-square" />
+            <figcaption className="px-1 pb-1 pt-2">
+              <p className="font-display text-[13px] font-bold">{meera.name}</p>
+              <p className="text-[11.5px] text-slate">Cardiologist · Tue, Thu, Sat</p>
+            </figcaption>
+          </figure>
+        </div>
+        <div>
+          <p className="eyebrow mb-3"><Sparkles size={14} aria-hidden="true" /> About the clinic</p>
+          <h2 className="h2">A neighbourhood clinic with hospital-grade depth</h2>
+          <p className="lead mt-5">
+            DOCTOR'S CLINIC brings senior specialists and modern diagnostics together in {CLINIC.addressShort}. We keep appointments on time, explain every test, and send you home with a clear plan.
+          </p>
+          <ul className="mt-7 space-y-3">
+            {points.map((p) => <li key={p} className="flex items-start gap-3 text-[15px]"><CheckCircle2 size={20} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />{p}</li>)}
+          </ul>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button type="button" className="btn-primary" onClick={() => navigate("explore")}>Explore the clinic <ArrowRight size={16} aria-hidden="true" /></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Journey() {
+  const steps = [
+    { n: "01", icon: Stethoscope, t: "Choose Doctor & Slot", d: "Search by name, specialty or symptom, then pick an open morning or evening slot." },
+    { n: "02", icon: ClipboardList, t: "Enter Patient Details", d: "Name, age, phone and what's bothering you. It takes under a minute." },
+    { n: "03", icon: FileCheck2, t: "Get Instant OPD Token Sheet", d: "Receive a token like DC-101 and a printable slip. Show it at reception." },
+  ];
+  return (
+    <section className="section">
+      <div className="container-x">
+        <SectionHead align="center" eyebrow="How booking works" title="Three steps from search to seat" />
+        <ol className="grid gap-6 md:grid-cols-3">
+          {steps.map(({ n, icon: I, t, d }, i) => (
+            <li key={n} className="card relative p-7">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-4xl font-bold text-brand/20">{n}</span>
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-cream"><I size={22} aria-hidden="true" /></span>
+              </div>
+              <h3 className="mt-5 font-display text-lg font-bold">{t}</h3>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-slate">{d}</p>
+              {i < 2 && <ArrowRight size={20} className="absolute -right-[19px] top-1/2 hidden -translate-y-1/2 rounded-full bg-cream text-brand md:block" aria-hidden="true" />}
+            </li>
+          ))}
+        </ol>
+        <div className="mt-10 text-center">
+          <button type="button" className="btn-primary px-7" onClick={() => navigate("book")}><CalendarPlus size={18} aria-hidden="true" /> Start booking</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Testimonials() {
+  return (
+    <section className="section bg-sand">
+      <div className="container-x">
+        <SectionHead eyebrow="Patient stories" title="What our patients say" />
+        <div className="grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t) => (
+            <figure key={t.name} className="card flex flex-col p-7">
+              <Quote size={28} className="text-coral" aria-hidden="true" />
+              <blockquote className="mt-4 flex-1 text-[15.5px] leading-relaxed text-ink">“{t.text}”</blockquote>
+              <figcaption className="mt-6 flex items-center justify-between border-t border-line pt-5">
+                <span>
+                  <span className="block font-display font-bold">{t.name}</span>
+                  <span className="block text-[13px] text-slate">{t.meta}</span>
+                </span>
+                <Stars n={t.rating} />
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CtaBand() {
+  return (
+    <section className="container-x py-16">
+      <div className="flex flex-wrap items-center justify-between gap-6 rounded-2xl bg-brand px-8 py-10 text-cream sm:px-12">
+        <div>
+          <h2 className="font-display text-2xl font-bold sm:text-3xl">Already booked? Find your token in seconds.</h2>
+          <p className="mt-2 text-cream/75">Enter your token number or phone number to view and re-print your slip.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" className="btn bg-cream text-brand hover:bg-white" onClick={() => navigate("token")}><Ticket size={18} aria-hidden="true" /> Find My Token</button>
+          <button type="button" className="btn border border-cream/30 text-cream hover:bg-white/10" onClick={() => navigate("book")}>Take Appointment</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <Hero />
+      <Metrics />
+      <Specialties />
+      <FeaturedDoctors />
+      <Showcase />
+      <About />
+      <Journey />
+      <Testimonials />
+      <CtaBand />
     </>
   );
 }

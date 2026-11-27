@@ -18,7 +18,7 @@ export function navigate(route, params = {}) {
 export function useRoute() {
   const [loc, setLoc] = useState(parseHash);
   useEffect(() => {
-    const on = () => { setLoc(parseHash()); window.scrollTo(0, 0); };
+    const on = () => { setLoc(parseHash()); window.scrollTo({ top: 0, behavior: "instant" }); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -26,10 +26,10 @@ export function useRoute() {
 }
 
 /** Scroll to an element id, below the sticky header. */
-export function scrollToId(id) {
+export function scrollToId(id, extra = 64) {
   requestAnimationFrame(() => {
     const el = document.getElementById(id);
     const header = document.getElementById("site-header");
-    if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.pageYOffset - (header ? header.offsetHeight : 0) - 8);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - (header ? header.offsetHeight : 0) - extra, behavior: "smooth" });
   });
 }

@@ -1,30 +1,36 @@
-/** Editorial monochrome design system: sharp, static, flat. */
+/** DOCTOR'S CLINIC design system: warm cream surfaces, emerald brand, mint + coral accents. */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
-    // Every radius resolves to 0, so no utility can round a corner.
-    borderRadius: { none: "0px", DEFAULT: "0px", sm: "0px", md: "0px", lg: "0px", xl: "0px", "2xl": "0px", "3xl": "0px", full: "0px" },
-    // No motion and no depth.
-    transitionProperty: { none: "none", DEFAULT: "none" },
-    transitionDuration: { 0: "0ms", DEFAULT: "0ms" },
-    animation: { none: "none" },
-    keyframes: {},
-    boxShadow: { none: "none", DEFAULT: "none" },
-    dropShadow: { none: "0 0 #0000" },
-    backdropBlur: { none: "0" },
     extend: {
       colors: {
-        ink: "#000000",
-        canvas: "#FFFFFF",
-        surface: "#F5F5F5",
-        muted: "#525252",
-        line: "#E5E5E5",
+        cream: "#FAF7F2",
+        sand: "#F2ECE1",
+        line: "#E6DFD3",
+        brand: { DEFAULT: "#0F5C52", dark: "#0B4740", soft: "#E3EFEC" },
+        mint: { DEFAULT: "#14B8A6", soft: "#DDF5F1", ink: "#0B7A6E" },
+        coral: { DEFAULT: "#E86A4A", soft: "#FCE9E3", ink: "#B8482C" },
+        ink: "#18221F",
+        slate: { DEFAULT: "#5A6561" },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', "Helvetica Neue", "Arial", "sans-serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "Menlo", "monospace"],
+        display: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "Menlo", "monospace"],
       },
-      letterSpacing: { widest: "0.16em" },
+      boxShadow: {
+        card: "0 1px 2px rgba(24,34,31,0.04), 0 1px 3px rgba(24,34,31,0.06)",
+        lift: "0 10px 30px -12px rgba(15,92,82,0.22)",
+        float: "0 18px 40px -16px rgba(24,34,31,0.28)",
+      },
+      keyframes: {
+        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+        popIn: { from: { opacity: 0, transform: "translateY(8px) scale(0.985)" }, to: { opacity: 1, transform: "none" } },
+      },
+      animation: {
+        fadeIn: "fadeIn 200ms ease-out",
+        popIn: "popIn 220ms ease-out",
+      },
     },
   },
   plugins: [],

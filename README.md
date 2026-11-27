@@ -2,7 +2,7 @@
 
 Live site: https://yashgupta26cs-lang.github.io/RESTAR-LIFE-CLINIC/
 
-A React, Tailwind CSS and Lucide React app with four views: Home, Overview / Explore, Take Appointment and Find My Token. It uses a strict editorial black-and-white design: sharp corners, no transitions or animations, no shadows or blur, and grayscale photos.
+A React, Tailwind CSS and Lucide React app with four views: Home, Overview / Explore, Take Appointment and Find My Token. It uses a warm cream and deep emerald design (Plus Jakarta Sans, Inter and JetBrains Mono), a custom inline SVG logo, rounded cards and subtle 200 ms transitions.
 
 ## Run locally
 ```bash
@@ -17,8 +17,8 @@ The `main` branch holds the source code. The `gh-pages` branch holds the built `
 ## Placeholder content (replace before real use)
 - **Doctors** (`src/data.js`): all 8 doctors are invented, along with their qualifications, biographies, languages, schedules and fees.
 - **Clinic details** (`CLINIC` in `src/data.js`): address, phone, emergency number and email.
-- **Statistics** on the home page: 08+, 12+, 15 Min and 100%.
-- **Photos**: Unsplash stock images. If one fails to load, a plain #EAEAEA box shows instead of a broken-image icon.
+- **Statistics and testimonials** on the home page.
+- **Photos**: Unsplash stock images, plus `public/images/` crops of the two reference images the clinic supplied (the 3D heart, and the portrait used for Dr. Meera Joshi). If a photo fails to load, a branded placeholder (or the doctor's initials) shows instead of a broken-image icon.
 
 ## Bookings and tokens
 - Bookings are saved in the browser's `localStorage`, so they stay on that device only. A clinic running this for real needs a server to share them across devices.
